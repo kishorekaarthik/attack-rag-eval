@@ -25,3 +25,10 @@ COLLECTION = "attack_techniques"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
+
+# Exact model IDs are pinned so eval results name the model that produced them.
+# gemini-2.5-flash-lite: cheapest stable Gemini Flash-family model on the
+# pricing page as of 2026-11-16 ($0.10 in / $0.40 out per 1M tokens), with no
+# shutdown date announced.
+GEMINI_MODEL = "gemini-2.5-flash-lite"
+CLAUDE_MODEL = "claude-haiku-5-5"

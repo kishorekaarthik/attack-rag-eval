@@ -40,6 +40,12 @@ def _client(persist_dir: Path):
     return chromadb.PersistentClient(path=str(persist_dir))
 
 
+def index_exists(persist_dir: Path = config.CHROMA_DIR) -> bool:
+    client = _client(persist_dir)
+    return any(c.name == config.COLLECTION for c in client.list_collections()) and \
+        client.get_collection(config.COLLECTION).count() > 0
+
+
 def build_index(chunks: list[Chunk], persist_dir: Path = config.CHROMA_DIR) -> None:
     """(Re)build the collection from scratch so stale chunks never linger."""
     client = _client(persist_dir)

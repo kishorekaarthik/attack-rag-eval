@@ -49,5 +49,14 @@ def test_all_chunks_round_trips_chunk_fields(index_dir):
     assert got == {c.id: c for c in CHUNKS}
 
 
+def test_index_exists_only_after_build(tmp_path, index_dir):
+    from copilot.index import index_exists
+
+    assert index_exists(persist_dir=index_dir) is True
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert index_exists(persist_dir=empty) is False
+
+
 def test_k_larger_than_collection_returns_everything(index_dir):
     assert len(vector_search("anything", k=10, persist_dir=index_dir)) == 3
