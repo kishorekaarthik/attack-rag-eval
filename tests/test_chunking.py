@@ -65,3 +65,30 @@ def test_multiple_tactics_are_comma_joined():
     [c] = chunk_technique(tech(tactics=("execution", "persistence")))
     assert c.tactics == "execution,persistence"
     assert c.text.startswith("T1059.001 PowerShell (tactics: execution, persistence)\n")
+
+
+def proc_tech(procedures):
+    return Technique(id="T1059.001", name="PowerShell", description="Short description.", tactics=["execution"],
+                     detection="", is_subtechnique=True, created="2020-01-01T00:00:00.000Z", procedures=procedures)
+
+
+def test_procedures_are_left_out_by_default():
+    assert [c.section for c in chunk_technique(proc_tech(["Emotet has used PowerShell."]))] == ["description"]
+
+
+def test_procedure_examples_become_their_own_chunks_when_asked():
+    chunks = chunk_technique(proc_tech(["Emotet has used PowerShell.", "APT29 ran encoded commands."]), procedures=True)
+    assert [c.section for c in chunks] == ["description", "procedures"]
+    assert chunks[1].id == "T1059.001:procedures:0"
+    assert chunks[1].text == ("T1059.001 PowerShell (tactics: execution) - procedure examples\n"
+                              "Emotet has used PowerShell.\nAPT29 ran encoded commands.")
+
+
+def test_procedure_chunks_respect_size_and_are_capped_per_technique():
+    examples = [f"Group {i} has used this technique in campaign number {i} against targets." for i in range(200)]
+    chunks = [c for c in chunk_technique(proc_tech(examples), max_chars=300, procedures=True, max_procedure_chunks=4)
+              if c.section == "procedures"]
+    assert len(chunks) == 4
+    header = "T1059.001 PowerShell (tactics: execution) - procedure examples\n"
+    assert all(len(c.text) - len(header) <= 300 for c in chunks)
+    assert chunks[0].text.split("\n")[1] == examples[0]

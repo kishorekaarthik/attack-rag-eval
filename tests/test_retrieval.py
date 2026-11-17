@@ -165,3 +165,72 @@ def test_staged_retrieval_without_reranker_is_plain_first_stage(toy_index):
     q = Question(id="g001", question="ransomware encrypt files", technique_id="T1486", source="generated")
     staged = retrieve_all([q], dict(persist_dir=toy_index), depth=2)
     assert [h.chunk_id for h in staged["g001"]] == [h.chunk_id for h in build_retriever(persist_dir=toy_index)(q.question, 2)]
+
+
+# --- section filter and separate corpora ------------------------------------------------------
+
+MIXED = CHUNKS + [
+    chunk("T1486", "Data Encrypted for Impact", "Monitor for mass file renames and ransom notes.", section="detection"),
+    chunk("T1105", "Ingress Tool Transfer", "Monitor certutil downloading files.", section="detection"),
+]
+
+
+@pytest.fixture
+def mixed_index(tmp_path):
+    build_index(MIXED, persist_dir=tmp_path)
+    return tmp_path
+
+
+def test_vector_search_can_be_limited_to_one_section(mixed_index):
+    from copilot.index import vector_search
+
+    hits = vector_search("monitor for ransom notes and file renames", k=6, persist_dir=mixed_index, section="description")
+    assert len(hits) == 4 and {h.section for h in hits} == {"description"}
+
+
+def test_hybrid_respects_the_section_filter(mixed_index):
+    hits = build_retriever(bm25=True, section="description", persist_dir=mixed_index)("monitor certutil downloading", 6)
+    assert hits and {h.section for h in hits} == {"description"}
+
+
+def test_each_corpus_has_its_own_collection(tmp_path):
+    from copilot.index import all_chunks, index_exists
+
+    build_index(CHUNKS, persist_dir=tmp_path)
+    assert index_exists(persist_dir=tmp_path) and not index_exists(persist_dir=tmp_path, corpus="procedures")
+    build_index(MIXED, persist_dir=tmp_path, corpus="procedures")
+    assert len(all_chunks(persist_dir=tmp_path)) == 4
+    assert len(all_chunks(persist_dir=tmp_path, corpus="procedures")) == 6
+    assert len(build_retriever(corpus="procedures", persist_dir=tmp_path)("certutil", 6)) == 6
+
+
+def test_staged_retrieval_applies_the_llm_reranker_last(toy_index):
+    from copilot.evals.dataset import Question
+    from copilot.evals.runner import retrieve_all
+
+    seen = []
+
+    def llm_reranker(question, hits):
+        seen.append((question, len(hits)))
+        return list(reversed(hits))
+
+    q = Question(id="g001", question="ransomware encrypt files", technique_id="T1486", source="generated")
+    plain = retrieve_all([q], dict(persist_dir=toy_index), depth=4)["g001"]
+    out = retrieve_all([q], dict(persist_dir=toy_index, llm_rerank=True), depth=4, llm_reranker=llm_reranker)["g001"]
+    assert [h.chunk_id for h in out] == [h.chunk_id for h in reversed(plain)]
+    assert seen == [("ransomware encrypt files", 4)]
+
+
+def test_only_the_top_n_candidates_are_rescored_and_the_rest_follow():
+    from copilot.retrieval import rerank_head
+
+    candidates = [hit("T1001"), hit("T1002"), hit("T1003"), hit("T1004")]
+    scored = []
+
+    def scorer(pairs):
+        scored.extend(text for _, text in pairs)
+        return [float(i) for i in range(len(pairs))]   # reverses whatever it is given
+
+    out = rerank_head("q", candidates, 2, scorer)
+    assert scored == ["text of T1001", "text of T1002"]
+    assert [h.technique_id for h in out] == ["T1002", "T1001", "T1003", "T1004"]

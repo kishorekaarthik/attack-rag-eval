@@ -9,7 +9,7 @@ structure and fall back to the legacy field so older bundles still parse.
 """
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import requests
@@ -26,6 +26,7 @@ class Technique:
     detection: str  # "" if none
     is_subtechnique: bool
     created: str
+    procedures: list[str] = field(default_factory=list)  # how real groups and malware used it
 
 
 def bundle_path(version: str = config.ATTACK_VERSION) -> Path:
@@ -86,10 +87,36 @@ def _detections(objects: list[dict]) -> dict[str, str]:
     return {k: "\n\n".join(v) for k, v in out.items()}
 
 
+_PROCEDURE_SOURCES = ("malware", "tool", "intrusion-set", "campaign")
+
+
+def _procedures(objects: list[dict]) -> dict[str, list[str]]:
+    """Map attack-pattern STIX id -> procedure examples.
+
+    A `uses` relationship from a group, campaign or piece of software to a
+    technique carries a sentence describing how it was used in a real
+    intrusion ("Emotet has used PowerShell to ..."). These read much more like
+    an analyst's incident description than the technique's own definition.
+    """
+    by_id = {o["id"]: o for o in objects}
+    out: dict[str, list[str]] = {}
+    for rel in objects:
+        if rel.get("type") != "relationship" or rel.get("relationship_type") != "uses" or not _is_active(rel):
+            continue
+        if not rel["target_ref"].startswith("attack-pattern--") or not rel["source_ref"].startswith(_PROCEDURE_SOURCES):
+            continue
+        source = by_id.get(rel["source_ref"])
+        text = clean(rel.get("description", ""))
+        if source and _is_active(source) and text:
+            out.setdefault(rel["target_ref"], []).append(text)
+    return out
+
+
 def load_techniques(path: Path) -> list[Technique]:
     """Active (not revoked, not deprecated) techniques and sub-techniques, sorted by ID."""
     objects = json.loads(Path(path).read_text(encoding="utf-8"))["objects"]
     detections = _detections(objects)
+    procedures = _procedures(objects)
     techniques = []
     for obj in objects:
         if obj.get("type") != "attack-pattern" or not _is_active(obj):
@@ -106,6 +133,7 @@ def load_techniques(path: Path) -> list[Technique]:
             detection=detections.get(obj["id"]) or clean(obj.get("x_mitre_detection", "")),
             is_subtechnique=bool(obj.get("x_mitre_is_subtechnique")),
             created=obj.get("created", ""),
+            procedures=sorted(procedures.get(obj["id"], [])),
         ))
     return sorted(techniques, key=lambda t: t.id)
 

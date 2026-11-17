@@ -95,3 +95,35 @@ def test_retired_ids_lists_revoked_and_deprecated_but_not_active(tmp_path):
         attack_pattern("T1003", "Deprecated", x_mitre_deprecated=True),
     ])
     assert retired_ids(path) == {"T1002": "revoked", "T1003": "deprecated"}
+
+
+def uses(source_id, tid, description, **extra):
+    rel = {"type": "relationship", "id": f"relationship--{source_id}-{tid}", "relationship_type": "uses",
+           "source_ref": source_id, "target_ref": f"attack-pattern--{tid}", "description": description}
+    rel.update(extra)
+    return rel
+
+
+def test_procedure_examples_come_from_uses_relationships(tmp_path):
+    [t] = load(tmp_path, [
+        attack_pattern("T1059.001", "PowerShell"),
+        {"type": "malware", "id": "malware--1", "name": "Emotet"},
+        {"type": "intrusion-set", "id": "intrusion-set--1", "name": "APT29"},
+        uses("malware--1", "T1059.001", "[Emotet](https://attack.mitre.org/software/S0367) has used PowerShell to fetch payloads.(Citation: X)"),
+        uses("intrusion-set--1", "T1059.001", "[APT29](https://attack.mitre.org/groups/G0016) ran encoded PowerShell commands."),
+    ])
+    assert t.procedures == ["APT29 ran encoded PowerShell commands.", "Emotet has used PowerShell to fetch payloads."]
+
+
+def test_procedure_examples_skip_revoked_empty_and_non_technique_targets(tmp_path):
+    [t] = load(tmp_path, [
+        attack_pattern("T1059.001", "PowerShell"),
+        {"type": "malware", "id": "malware--1", "name": "Emotet"},
+        {"type": "malware", "id": "malware--2", "name": "Old", "revoked": True},
+        uses("malware--1", "T1059.001", "Revoked relationship.", revoked=True),
+        uses("malware--2", "T1059.001", "From revoked software."),
+        uses("malware--1", "T1059.001", ""),
+        {"type": "relationship", "id": "relationship--x", "relationship_type": "uses",
+         "source_ref": "intrusion-set--1", "target_ref": "malware--1", "description": "Group uses software."},
+    ])
+    assert t.procedures == []

@@ -18,7 +18,7 @@ class Chunk:
     technique_id: str
     name: str
     tactics: str  # comma-joined; Chroma metadata values must be scalars
-    section: str  # "description" | "detection"
+    section: str  # "description" | "detection" | "procedures"
 
 
 def _split_words(text: str, max_chars: int, overlap: int) -> list[str]:
@@ -63,15 +63,45 @@ def split_text(text: str, max_chars: int, overlap: int) -> list[str]:
     return pieces
 
 
-def chunk_technique(t: Technique, max_chars: int = 800, overlap: int = 120) -> list[Chunk]:
+def pack_lines(lines: list[str], max_chars: int) -> list[str]:
+    """Pack whole lines into pieces of at most `max_chars`; an oversized line is cut by words."""
+    pieces, current = [], ""
+    for line in lines:
+        if len(line) > max_chars:
+            if current:
+                pieces.append(current)
+                current = ""
+            pieces.extend(_split_words(line, max_chars, 0))
+        elif current and len(current) + 1 + len(line) > max_chars:
+            pieces.append(current)
+            current = line
+        else:
+            current = f"{current}\n{line}" if current else line
+    if current:
+        pieces.append(current)
+    return pieces
+
+
+def chunk_technique(t: Technique, max_chars: int = 800, overlap: int = 120, procedures: bool = False,
+                    max_procedure_chunks: int = 4) -> list[Chunk]:
+    """Chunks for one technique.
+
+    With `procedures=True`, real-world usage examples are added as extra
+    chunks. They are capped per technique because a few very common techniques
+    have hundreds of examples and would otherwise swamp the index.
+    """
     tactics = ", ".join(t.tactics)
     base = f"{t.id} {t.name} (tactics: {tactics})"
+    sections = [
+        ("description", split_text(t.description, max_chars, overlap), base),
+        ("detection", split_text(t.detection, max_chars, overlap), f"{base} - detection"),
+    ]
+    if procedures:
+        sections.append(("procedures", pack_lines(t.procedures, max_chars)[:max_procedure_chunks],
+                         f"{base} - procedure examples"))
     chunks = []
-    for section, text, header in (
-        ("description", t.description, base),
-        ("detection", t.detection, f"{base} - detection"),
-    ):
-        for i, piece in enumerate(split_text(text, max_chars, overlap)):
+    for section, pieces, header in sections:
+        for i, piece in enumerate(pieces):
             chunks.append(Chunk(
                 id=f"{t.id}:{section}:{i}",
                 text=f"{header}\n{piece}",

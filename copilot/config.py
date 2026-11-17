@@ -36,10 +36,12 @@ EMBED_BATCH_SIZE = 16
 RERANK_BATCH_SIZE = 8
 
 # Retrieval settings. Tuned on the dev split only (see docs/design.md).
-FUSION_CANDIDATES = 50   # chunks taken from each of vector search and BM25 before fusion
-RRF_K = 60               # reciprocal rank fusion constant
-RERANK_CANDIDATES = 30   # fused chunks the cross-encoder re-scores
+FUSION_CANDIDATES = 20   # chunks taken from each of vector search and BM25 before fusion
+RRF_K = 10               # reciprocal rank fusion constant (60 in the original paper; 10 scored best on dev)
+RERANK_CANDIDATES = 20   # fused chunks the cross-encoder re-scores
 CONTEXT_TECHNIQUES = 5   # distinct techniques given to the LLM
+LLM_RERANK_CANDIDATES = 20   # distinct techniques shown to the LLM reranker
+LLM_RERANK_DEPTH = 100        # chunks fetched so that 20 distinct techniques come back
 CONTEXT_CHUNKS_PER_TECHNIQUE = 2
 RETRIEVAL_DEPTH = 30     # chunks fetched so that 5 distinct techniques come back
 

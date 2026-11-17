@@ -2,7 +2,7 @@
 import gc
 from collections.abc import Callable
 
-from copilot import index, retrieval
+from copilot import config, index, retrieval
 from copilot.evals.dataset import Question
 from copilot.evals.metrics import ranked_technique_ids, score_question, summarise
 from copilot.index import Hit
@@ -51,28 +51,39 @@ def release_models() -> None:
 
 def retrieve_all(questions: list[Question], settings: dict, depth: int = 30,
                  scorer: retrieval.Scorer = retrieval.cross_encoder_scores,
-                 tick: Callable[[], object] | None = None) -> dict[str, list[Hit]]:
-    """Run a pipeline in two passes so only one model is in memory at a time.
+                 tick: Callable[[], object] | None = None,
+                 llm_reranker: Callable[[str, list[Hit]], list[Hit]] | None = None) -> dict[str, list[Hit]]:
+    """Run a pipeline in passes so only one model is in memory at a time.
 
     Pass 1 runs the first stage (vector, or vector + BM25) for every question,
-    then the embedding model is released. Pass 2 reranks the saved candidates.
-    The result is identical to calling the composed retriever per question.
+    then the embedding model is released. Pass 2 re-scores the top candidates
+    with the cross-encoder, if the pipeline has one. Pass 3 applies the LLM
+    reranker, if the pipeline has one. The result is identical to calling the
+    composed retriever per question.
     """
     settings = dict(settings)
     n = settings.pop("rerank_candidates", 0)
+    use_llm = settings.pop("llm_rerank", False)
     settings.pop("scorer", None)
+    first_depth = max(depth, n, config.LLM_RERANK_DEPTH if use_llm else 0)
     first_stage = retrieval.build_retriever(**settings)
-    candidates = {}
+    hits = {}
     for q in questions:
         if tick:
             tick()
-        candidates[q.id] = first_stage(q.question, max(depth, n) if n else depth)
-    if not n:
-        return candidates
+        hits[q.id] = first_stage(q.question, first_depth)
     release_models()
-    out = {}
-    for q in questions:
-        if tick:
-            tick()
-        out[q.id] = retrieval.rerank(q.question, candidates[q.id], depth, scorer)
-    return out
+    if n:
+        for q in questions:
+            if tick:
+                tick()
+            hits[q.id] = retrieval.rerank_head(q.question, hits[q.id], n, scorer)
+        release_models()
+    if use_llm:
+        if llm_reranker is None:
+            from copilot.llm_rerank import default_reranker
+
+            llm_reranker = default_reranker()
+        for q in questions:
+            hits[q.id] = llm_reranker(q.question, hits[q.id])
+    return {qid: h[:depth] for qid, h in hits.items()}

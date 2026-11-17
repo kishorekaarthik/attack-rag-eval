@@ -52,8 +52,9 @@ class BM25Index:
 
 
 @lru_cache(maxsize=4)
-def _bm25_index(persist_dir: Path, embed_model: str) -> BM25Index:
-    return BM25Index(index.all_chunks(persist_dir, embed_model))
+def _bm25_index(persist_dir: Path, embed_model: str, corpus: str = "base", section: str | None = None) -> BM25Index:
+    chunks = index.all_chunks(persist_dir, embed_model, corpus)
+    return BM25Index([c for c in chunks if section is None or c.section == section])
 
 
 def rrf(rankings: list[list[str]], k: int = 60, with_scores: bool = False):
@@ -93,15 +94,15 @@ def rerank(query: str, hits: list[Hit], k: int, scorer: Scorer = cross_encoder_s
 
 def build_retriever(embed_model: str = config.EMBED_MODEL, bm25: bool = False, candidates: int = config.FUSION_CANDIDATES,
                     rrf_k: int = config.RRF_K, rerank_candidates: int = 0, scorer: Scorer = cross_encoder_scores,
-                    persist_dir: Path = config.CHROMA_DIR) -> Retriever:
+                    persist_dir: Path = config.CHROMA_DIR, corpus: str = "base", section: str | None = None) -> Retriever:
     """Compose a retriever. `rerank_candidates=0` means no reranking stage."""
 
     def first_stage(query: str, n: int) -> list[Hit]:
         if not bm25:
-            return index.vector_search(query, n, persist_dir, embed_model)
+            return index.vector_search(query, n, persist_dir, embed_model, corpus, section)
         depth = max(n, candidates)
-        vec = index.vector_search(query, depth, persist_dir, embed_model)
-        kw = _bm25_index(persist_dir, embed_model).search(query, depth)
+        vec = index.vector_search(query, depth, persist_dir, embed_model, corpus, section)
+        kw = _bm25_index(persist_dir, embed_model, corpus, section).search(query, depth)
         by_id = {h.chunk_id: h for h in vec + kw}
         fused = rrf([[h.chunk_id for h in vec], [h.chunk_id for h in kw]], k=rrf_k, with_scores=True)
         return [replace(by_id[cid], score=score) for cid, score in fused[:n]]
@@ -109,22 +110,47 @@ def build_retriever(embed_model: str = config.EMBED_MODEL, bm25: bool = False, c
     def retrieve(query: str, k: int = 5) -> list[Hit]:
         if not rerank_candidates:
             return first_stage(query, k)
-        return rerank(query, first_stage(query, max(k, rerank_candidates)), k, scorer)
+        return rerank_head(query, first_stage(query, max(k, rerank_candidates)), rerank_candidates, scorer)[:k]
 
     return retrieve
 
 
+def rerank_head(query: str, hits: list[Hit], n: int, scorer: Scorer = cross_encoder_scores) -> list[Hit]:
+    """Re-score only the first `n` hits; the rest follow in their original order."""
+    return rerank(query, hits[:n], n, scorer) + hits[n:]
+
+
 # Named configurations. Tuned values (config.py) were chosen on the dev split only.
+# `llm_rerank` is applied after everything else (see copilot/llm_rerank.py).
 PIPELINES: dict[str, dict] = {
     "vector": dict(),
     "hybrid": dict(bm25=True),
     "hybrid_rerank": dict(bm25=True, rerank_candidates=config.RERANK_CANDIDATES),
     "vector_bge": dict(embed_model="bge-small"),
     "hybrid_rerank_bge": dict(embed_model="bge-small", bm25=True, rerank_candidates=config.RERANK_CANDIDATES),
+    "vector_desc": dict(section="description"),
+    "vector_proc": dict(corpus="procedures"),
+    "hybrid_proc": dict(corpus="procedures", bm25=True),
+    "vector_llm": dict(llm_rerank=True),
+    "vector_proc_llm": dict(corpus="procedures", llm_rerank=True),
+    "hybrid_proc_llm": dict(corpus="procedures", bm25=True, llm_rerank=True),
 }
 
 
 def get_retriever(name: str) -> Retriever:
     if name not in PIPELINES:
         raise ValueError(f"Unknown retriever '{name}'. Choose one of: {', '.join(PIPELINES)}.")
-    return build_retriever(**PIPELINES[name])
+    settings = dict(PIPELINES[name])
+    if not settings.pop("llm_rerank", False):
+        return build_retriever(**settings)
+
+    from copilot.llm_rerank import default_reranker
+
+    first, state = build_retriever(**settings), {}
+
+    def retrieve(query: str, k: int = 5) -> list[Hit]:
+        if "reranker" not in state:  # built on first use: it needs an API key
+            state["reranker"] = default_reranker()
+        return state["reranker"](query, first(query, max(k, config.LLM_RERANK_DEPTH)))[:k]
+
+    return retrieve

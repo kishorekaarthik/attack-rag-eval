@@ -48,20 +48,28 @@ def _client(persist_dir: Path):
     return chromadb.PersistentClient(path=str(persist_dir))
 
 
-def _collection_name(embed_model: str) -> str:
-    return f"{config.COLLECTION}_{embed_model.replace('-', '_')}"
+def _collection_name(embed_model: str, corpus: str = "base") -> str:
+    name = f"{config.COLLECTION}_{embed_model.replace('-', '_')}"
+    return name if corpus == "base" else f"{name}_{corpus}"
 
 
-def index_exists(persist_dir: Path = config.CHROMA_DIR, embed_model: str = config.EMBED_MODEL) -> bool:
+def index_exists(persist_dir: Path = config.CHROMA_DIR, embed_model: str = config.EMBED_MODEL,
+                 corpus: str = "base") -> bool:
     client = _client(persist_dir)
-    name = _collection_name(embed_model)
+    name = _collection_name(embed_model, corpus)
     return any(c.name == name for c in client.list_collections()) and client.get_collection(name).count() > 0
 
 
-def build_index(chunks: list[Chunk], persist_dir: Path = config.CHROMA_DIR, embed_model: str = config.EMBED_MODEL) -> None:
-    """(Re)build the collection from scratch so stale chunks never linger."""
+def build_index(chunks: list[Chunk], persist_dir: Path = config.CHROMA_DIR, embed_model: str = config.EMBED_MODEL,
+                corpus: str = "base") -> None:
+    """(Re)build the collection from scratch so stale chunks never linger.
+
+    `corpus` names a variant of the chunk set (e.g. "procedures" adds
+    procedure-example chunks), kept in its own collection so variants can be
+    compared without rebuilding.
+    """
     client = _client(persist_dir)
-    name = _collection_name(embed_model)
+    name = _collection_name(embed_model, corpus)
     if any(c.name == name for c in client.list_collections()):
         client.delete_collection(name)
     collection = client.create_collection(name, metadata={"hnsw:space": "cosine"})
@@ -77,10 +85,12 @@ def build_index(chunks: list[Chunk], persist_dir: Path = config.CHROMA_DIR, embe
 
 
 def vector_search(query: str, k: int = 5, persist_dir: Path = config.CHROMA_DIR,
-                  embed_model: str = config.EMBED_MODEL) -> list[Hit]:
-    collection = _client(persist_dir).get_collection(_collection_name(embed_model))
+                  embed_model: str = config.EMBED_MODEL, corpus: str = "base", section: str | None = None) -> list[Hit]:
+    """Nearest chunks by cosine similarity; `section` limits the search to one kind of chunk."""
+    collection = _client(persist_dir).get_collection(_collection_name(embed_model, corpus))
     res = collection.query(query_embeddings=embed([query_text(embed_model, query)], embed_model),
-                           n_results=min(k, collection.count()))
+                           n_results=min(k, collection.count()),
+                           where={"section": section} if section else None)
     return [
         Hit(chunk_id=cid, technique_id=meta["technique_id"], name=meta["name"], section=meta["section"],
             text=doc, score=1.0 - dist)
@@ -88,7 +98,8 @@ def vector_search(query: str, k: int = 5, persist_dir: Path = config.CHROMA_DIR,
     ]
 
 
-def all_chunks(persist_dir: Path = config.CHROMA_DIR, embed_model: str = config.EMBED_MODEL) -> list[Chunk]:
+def all_chunks(persist_dir: Path = config.CHROMA_DIR, embed_model: str = config.EMBED_MODEL,
+               corpus: str = "base") -> list[Chunk]:
     """Every stored chunk; the keyword (BM25) index is built from these."""
-    res = _client(persist_dir).get_collection(_collection_name(embed_model)).get(include=["documents", "metadatas"])
+    res = _client(persist_dir).get_collection(_collection_name(embed_model, corpus)).get(include=["documents", "metadatas"])
     return [Chunk(id=cid, text=doc, **meta) for cid, doc, meta in zip(res["ids"], res["documents"], res["metadatas"])]
