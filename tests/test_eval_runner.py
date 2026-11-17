@@ -104,3 +104,16 @@ def test_make_question_retries_when_the_reply_leaks_the_name():
 def test_make_question_gives_up_after_retries():
     provider = ScriptedProvider(*["Technique Number 3 again."] * 3)
     assert make_question(POOL[3], provider, retries=3) is None
+
+
+def test_evaluate_calls_tick_before_every_question():
+    ticks = []
+    evaluate(QUESTIONS, lambda q, k: RESULTS[q], k=5, depth=30, tick=lambda: ticks.append(1))
+    assert len(ticks) == 3
+
+
+def test_evaluate_hits_scores_precomputed_results_the_same_way():
+    from copilot.evals.runner import evaluate_hits
+
+    by_id = {q.id: RESULTS[q.question] for q in QUESTIONS}
+    assert evaluate_hits(QUESTIONS, by_id, k=5) == evaluate(QUESTIONS, lambda q, k: RESULTS[q], k=5, depth=30)

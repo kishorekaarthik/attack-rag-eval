@@ -31,6 +31,10 @@ EMBED_MODEL = "minilm"
 
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
+# Small batches keep peak memory low on an 12 GB laptop and a 1 GB free-tier host.
+EMBED_BATCH_SIZE = 16
+RERANK_BATCH_SIZE = 8
+
 # Retrieval settings. Tuned on the dev split only (see docs/design.md).
 FUSION_CANDIDATES = 50   # chunks taken from each of vector search and BM25 before fusion
 RRF_K = 60               # reciprocal rank fusion constant

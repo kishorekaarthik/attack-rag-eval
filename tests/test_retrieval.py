@@ -138,3 +138,30 @@ def test_context_is_top_k_techniques_with_at_most_two_chunks_each():
         "T1004:description:0", "T1005:description:0", "T1002:detection:0",
     ]
     assert "T1006" not in {h.technique_id for h in context}
+
+
+# --- staged retrieval (one model in memory at a time) -------------------------------------
+
+def test_staged_retrieval_matches_the_composed_retriever(toy_index):
+    from copilot.evals.dataset import Question
+    from copilot.evals.runner import retrieve_all
+
+    def scorer(pairs):
+        return [float(len(text) % 7) for _, text in pairs]
+
+    questions = [Question(id="g001", question="ransomware encrypt files", technique_id="T1486", source="generated"),
+                 Question(id="g002", question="certutil download", technique_id="T1105", source="generated")]
+    settings = dict(bm25=True, rerank_candidates=3, persist_dir=toy_index)
+    composed = build_retriever(scorer=scorer, **settings)
+    staged = retrieve_all(questions, settings, depth=3, scorer=scorer)
+    for q in questions:
+        assert [(h.chunk_id, h.score) for h in staged[q.id]] == [(h.chunk_id, h.score) for h in composed(q.question, 3)]
+
+
+def test_staged_retrieval_without_reranker_is_plain_first_stage(toy_index):
+    from copilot.evals.dataset import Question
+    from copilot.evals.runner import retrieve_all
+
+    q = Question(id="g001", question="ransomware encrypt files", technique_id="T1486", source="generated")
+    staged = retrieve_all([q], dict(persist_dir=toy_index), depth=2)
+    assert [h.chunk_id for h in staged["g001"]] == [h.chunk_id for h in build_retriever(persist_dir=toy_index)(q.question, 2)]

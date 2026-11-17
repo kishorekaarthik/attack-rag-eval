@@ -41,7 +41,7 @@ def query_text(embed_model: str, query: str) -> str:
 
 def embed(texts: list[str], embed_model: str = config.EMBED_MODEL) -> list[list[float]]:
     # Normalised vectors: cosine similarity becomes a plain dot product.
-    return embedder(embed_model).encode(texts, normalize_embeddings=True, batch_size=64).tolist()
+    return embedder(embed_model).encode(texts, normalize_embeddings=True, batch_size=config.EMBED_BATCH_SIZE).tolist()
 
 
 def _client(persist_dir: Path):

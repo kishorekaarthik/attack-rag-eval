@@ -80,7 +80,7 @@ def _cross_encoder():
 
 
 def cross_encoder_scores(pairs: list[tuple[str, str]]) -> list[float]:
-    return [float(s) for s in _cross_encoder().predict(pairs, batch_size=32)]
+    return [float(s) for s in _cross_encoder().predict(pairs, batch_size=config.RERANK_BATCH_SIZE)]
 
 
 def rerank(query: str, hits: list[Hit], k: int, scorer: Scorer = cross_encoder_scores) -> list[Hit]:
