@@ -1,0 +1,26 @@
+question,technique_id,note
+"An accounts clerk opens an invoice document that arrived as a file with an email from an unknown supplier; seconds later the word processor spawns a script interpreter.",T1566.001
+"A targeted email urges a manager to click through to a file-sharing page, where she downloads and runs what she believes is a meeting agenda.",T1566.002
+"Attackers send a crafted request to the company's internet-facing VPN portal, triggering an unpatched flaw that gives them a shell on the appliance.",T1190
+"There is no malware and no failed logins: the intruder signs in through the VPN using a contractor's real username and password bought from a criminal marketplace.",T1078
+"A hidden window launches the built-in .NET-based Windows command shell with a long Base64-encoded argument that downloads and runs code in memory.",T1059.001
+"The intruder registers a job with the built-in Windows timer utility so that their binary runs every morning at 9 am under SYSTEM.",T1053.005
+"A shortcut to an unfamiliar executable is dropped into the folder Windows checks for programs to launch whenever the user signs in.",T1547.001
+"A malicious loader allocates memory inside a running browser, writes its code there and starts a new thread, so the activity appears to come from the browser.",T1055
+"Malware running under a local administrator's session abuses an auto-elevating Windows binary to gain high-integrity rights without the consent prompt appearing.",T1548.002
+"Shortly after the intrusion, the Security and System records on a server are wiped with a built-in command-line utility, leaving a single entry noting the wipe.",T1685.005,originally T1070.001 (revoked; replaced by T1685.005)
+"The dropped script is unreadable: variable names are random, strings are XOR-encoded and layers of Base64 must be peeled away before its purpose is visible.",T1027
+"Before deploying the payload, the attacker stops the endpoint protection agent's service and switches off real-time monitoring through a registry change.",T1685,originally T1562.001 (revoked; replaced by T1685)
+"On a domain controller, the intruder creates a volume snapshot and copies out the directory database file with the SYSTEM hive to extract every account's hash offline.",T1003.003
+"Hundreds of different accounts each receive one failed login within an hour, all using the same seasonal password, staying under the lockout threshold.",T1110.003
+"A regular domain user requests service tickets for dozens of accounts with registered SPNs, then takes the tickets offline to crack the encrypted portion.",T1558.003
+"From a compromised workstation, the intruder queries the directory to list every user object in the company's domain.",T1087.002
+"An internal host sweeps the whole /16, probing each address on ports 22, 445, 3389 and 1433 to see what is listening.",T1046
+"Using stolen credentials, the attacker opens an interactive graphical session from a workstation to a file server over port 3389.",T1021.001
+"The attacker connects to the hidden C$ share on a neighbouring server with an administrator account and uses it to run a binary there remotely.",T1021.002
+"Before removal, thousands of design documents are packed into password-protected, split volumes using a command-line compression tool.",T1560.001
+"Once inside, the attacker uses a built-in certificate-management tool to pull a credential dumper and a scanner from an external server onto the host.",T1105
+"Stolen files are sent out in small chunks through the same encrypted beaconing connection the implant already uses to receive commands.",T1041
+"Forty gigabytes leave the network overnight to a personal account on a consumer file-syncing service, uploaded with a command-line sync tool.",T1567.002
+"Users find their files renamed with an unfamiliar extension and unopenable, with a note in every folder demanding payment for the key.",T1486
+"Just before the final stage, a command deletes all volume snapshots and turns off the automatic repair feature at boot.",T1490

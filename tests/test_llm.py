@@ -98,3 +98,45 @@ def test_gemini_empty_reply_becomes_empty_string():
     models.generate_content = lambda **kw: type("Resp", (), {"text": None})()
     provider = GeminiProvider(api_key="k", model="m", client=type("Client", (), {"models": models})())
     assert provider.generate("s", "p") == ""
+
+
+class RateLimited(Exception):
+    code = 429
+
+
+def flaky_gemini(failures, error=RateLimited("quota")):
+    models = FakeGeminiModels()
+    state = {"left": failures}
+
+    def generate_content(**kwargs):
+        models.calls.append(kwargs)
+        if state["left"] > 0:
+            state["left"] -= 1
+            raise error
+        return type("Resp", (), {"text": "answer"})()
+
+    models.generate_content = generate_content
+    waits = []
+    provider = GeminiProvider(api_key="k", model="m", client=type("Client", (), {"models": models})(), sleep=waits.append)
+    return provider, models, waits
+
+
+def test_gemini_waits_and_retries_when_rate_limited():
+    provider, models, waits = flaky_gemini(failures=2)
+    assert provider.generate("s", "p") == "answer"
+    assert len(models.calls) == 3
+    assert len(waits) == 2 and waits[0] > 0 and waits[1] > waits[0]
+
+
+def test_gemini_gives_up_after_repeated_rate_limits():
+    provider, models, waits = flaky_gemini(failures=99)
+    with pytest.raises(LLMError, match="quota"):
+        provider.generate("s", "p")
+    assert len(models.calls) == 5
+
+
+def test_gemini_does_not_retry_other_errors():
+    provider, models, waits = flaky_gemini(failures=1, error=ValueError("bad request"))
+    with pytest.raises(LLMError, match="bad request"):
+        provider.generate("s", "p")
+    assert len(models.calls) == 1 and waits == []

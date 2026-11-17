@@ -5,6 +5,7 @@ pipeline and the eval harness run unchanged against either model. That is
 what makes a fair model-vs-model comparison possible later.
 """
 import os
+import time
 from typing import Protocol
 
 import httpx
@@ -29,9 +30,13 @@ class LLMError(RuntimeError):
 
 class GeminiProvider:
     name = "gemini"
+    # Seconds to wait after each rate-limit reply. The free tier allows 15
+    # requests a minute, so eval runs of 100+ calls must pace themselves.
+    RETRY_WAITS = (15, 30, 60, 60)
 
-    def __init__(self, api_key: str, model: str = config.GEMINI_MODEL, client=None):
+    def __init__(self, api_key: str, model: str = config.GEMINI_MODEL, client=None, sleep=time.sleep):
         self.model = model
+        self._sleep = sleep
         if client is None:
             from google import genai  # imported here so tests and Claude-only runs don't need it
 
@@ -41,15 +46,20 @@ class GeminiProvider:
     def generate(self, system: str, prompt: str, temperature: float = 0.0) -> str:
         from google.genai import types
 
-        try:
-            resp = self._client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(system_instruction=system, temperature=temperature),
-            )
-        except Exception as exc:  # the SDK raises several unrelated error types
-            raise LLMError(f"Gemini request failed: {exc}") from exc
-        return resp.text or ""
+        request = dict(
+            model=self.model,
+            contents=prompt,
+            config=types.GenerateContentConfig(system_instruction=system, temperature=temperature),
+        )
+        for wait in (*self.RETRY_WAITS, None):
+            try:
+                return self._client.models.generate_content(**request).text or ""
+            except Exception as exc:  # the SDK raises several unrelated error types
+                if getattr(exc, "code", None) == 429 and wait is not None:
+                    self._sleep(wait)
+                    continue
+                raise LLMError(f"Gemini request failed: {exc}") from exc
+        raise AssertionError("unreachable")
 
 
 class ClaudeProvider:

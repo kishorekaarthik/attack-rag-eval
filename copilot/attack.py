@@ -108,3 +108,39 @@ def load_techniques(path: Path) -> list[Technique]:
             created=obj.get("created", ""),
         ))
     return sorted(techniques, key=lambda t: t.id)
+
+
+def _attack_patterns(path: Path) -> tuple[list[dict], list[dict]]:
+    objects = json.loads(Path(path).read_text(encoding="utf-8"))["objects"]
+    return [o for o in objects if o.get("type") == "attack-pattern"], objects
+
+
+def retired_ids(path: Path) -> dict[str, str]:
+    """Technique IDs that exist in the bundle but must not be used: id -> "revoked" | "deprecated"."""
+    patterns, _ = _attack_patterns(path)
+    out = {}
+    for obj in patterns:
+        tid = _attack_id(obj)
+        if tid and not _is_active(obj):
+            out[tid] = "revoked" if obj.get("revoked") else "deprecated"
+    return out
+
+
+def revoked_successors(path: Path) -> dict[str, str]:
+    """Revoked technique ID -> the active ID that replaced it, following `revoked-by` chains."""
+    patterns, objects = _attack_patterns(path)
+    by_stix = {o["id"]: o for o in patterns}
+    nxt = {r["source_ref"]: r["target_ref"] for r in objects
+           if r.get("type") == "relationship" and r.get("relationship_type") == "revoked-by"}
+    out = {}
+    for stix_id, obj in by_stix.items():
+        if stix_id not in nxt:
+            continue
+        cur, seen = stix_id, set()
+        while cur in nxt and cur not in seen:  # `seen` guards against a cycle in bad data
+            seen.add(cur)
+            cur = nxt[cur]
+        target = by_stix.get(cur)
+        if target and _is_active(target) and _attack_id(obj) and _attack_id(target):
+            out[_attack_id(obj)] = _attack_id(target)
+    return out
