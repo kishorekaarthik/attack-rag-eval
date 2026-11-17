@@ -40,7 +40,7 @@ def main() -> None:
         if not rows:
             continue
         print(f"\n**{split} split**\n")
-        print("| Pipeline | Set | hit rate@5 [95% CI] | MRR [95% CI] | hit rate@5, parent level |")
+        print("| Pipeline | Set | hit rate@5 [95% CI] | MRR@5 [95% CI] | hit rate@5, parent level |")
         print("|---|---|---|---|---|")
         for retriever, summary in rows:
             for key, label in SETS:

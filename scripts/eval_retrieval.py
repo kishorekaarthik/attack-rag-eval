@@ -1,4 +1,4 @@
-"""Measure retrieval: hit rate@5 and MRR over the top 5 distinct techniques.
+"""Measure retrieval: hit rate@5 and MRR@5 over the top 5 distinct techniques.
 
   .venv/Scripts/python scripts/eval_retrieval.py --retriever vector --split dev
 
@@ -17,15 +17,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from copilot import config  # noqa: E402
 from copilot.attack import bundle_path, load_techniques, retired_ids, revoked_successors  # noqa: E402
 from copilot.evals.dataset import QUESTIONS_PATH, DatasetError, load_questions, validate  # noqa: E402
-from copilot.evals.runner import evaluate  # noqa: E402
-from copilot.retrieval import PIPELINES, get_retriever  # noqa: E402
+from copilot.evals.runner import evaluate_hits, retrieve_all  # noqa: E402
+from copilot.retrieval import PIPELINES  # noqa: E402
+from copilot.sysmem import LowMemoryError, require_memory  # noqa: E402
 
 K = config.CONTEXT_TECHNIQUES
 SET_LABELS = {"overall": "all", "independent": "independent set", "generated": "generated set"}
 
 
 def print_summary(summary: dict) -> None:
-    print(f"{'set':<16} {'hit@5':>9} {'rate':>6} {'95% CI':>15}   {'MRR':>6} {'95% CI':>15}   {'hit@5 parent':>13}")
+    print(f"{'set':<16} {'hit@5':>9} {'rate':>6} {'95% CI':>15}   {'MRR@5':>6} {'95% CI':>15}   {'hit@5 parent':>13}")
     for name, s in summary.items():
         print(f"{SET_LABELS[name]:<16} {str(s['hits']) + '/' + str(s['n']):>9} {s['hit_rate']:>6.3f} "
               f"[{s['hit_rate_ci'][0]:.3f}, {s['hit_rate_ci'][1]:.3f}]   {s['mrr']:>6.3f} "
@@ -49,7 +50,12 @@ def main() -> int:
         return 1
 
     questions = [q for q in everything if q.split == args.split]
-    report = evaluate(questions, get_retriever(args.retriever), k=K, depth=config.RETRIEVAL_DEPTH)
+    try:  # one model in memory at a time; stop if the machine runs short
+        hits = retrieve_all(questions, PIPELINES[args.retriever], config.RETRIEVAL_DEPTH, tick=require_memory)
+    except LowMemoryError as exc:
+        print(f"STOPPED: {exc}", file=sys.stderr)
+        return 2
+    report = evaluate_hits(questions, hits, k=K)
 
     embed_key = PIPELINES[args.retriever].get("embed_model", config.EMBED_MODEL)
     print(f"retriever={args.retriever}  split={args.split}  ATT&CK v{config.ATTACK_VERSION}  "

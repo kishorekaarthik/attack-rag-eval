@@ -7,7 +7,7 @@ order of first appearance, and both metrics look at the top k of that list:
 
 - hit@k: the correct technique is among the top k distinct techniques.
 - reciprocal rank: 1 / its position in that top k, 0 if it is not there.
-  The mean over questions is MRR.
+  The mean over questions is MRR@5 (cut off at rank 5).
 
 The answer pipeline builds its context from the same top k techniques, so
 hit@k is exactly "was the right technique in front of the LLM".
