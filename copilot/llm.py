@@ -33,6 +33,7 @@ class GeminiProvider:
     # Seconds to wait after each rate-limit reply. The free tier allows 15
     # requests a minute, so eval runs of 100+ calls must pace themselves.
     RETRY_WAITS = (15, 30, 60, 60)
+    RETRY_CODES = (429, 503)  # rate limited, temporarily overloaded
 
     def __init__(self, api_key: str, model: str = config.GEMINI_MODEL, client=None, sleep=time.sleep):
         self.model = model
@@ -55,7 +56,7 @@ class GeminiProvider:
             try:
                 return self._client.models.generate_content(**request).text or ""
             except Exception as exc:  # the SDK raises several unrelated error types
-                if getattr(exc, "code", None) == 429 and wait is not None:
+                if getattr(exc, "code", None) in self.RETRY_CODES and wait is not None:
                     self._sleep(wait)
                     continue
                 raise LLMError(f"Gemini request failed: {exc}") from exc

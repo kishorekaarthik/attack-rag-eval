@@ -1,19 +1,23 @@
-"""Retrieval metrics.
+"""Retrieval metrics, computed over distinct techniques.
 
-Two numbers per question, each answering a different thing:
+A retriever returns chunks, and one technique often owns several of the top
+chunks. Scoring chunks would let a technique crowd out its neighbours and
+count twice. So the chunk list is first reduced to distinct techniques in
+order of first appearance, and both metrics look at the top k of that list:
 
-- hit@k: is the correct technique among the first k *chunks*? Those k chunks
-  are exactly what the LLM is given, so this is "could the LLM have seen the
-  right answer at all".
-- reciprocal rank: 1 / position of the correct technique in the list of
-  *distinct techniques*, 0 if absent. One technique often owns several of the
-  top chunks; counting them separately would push the next technique's rank
-  down for no real reason. The mean over questions is MRR.
+- hit@k: the correct technique is among the top k distinct techniques.
+- reciprocal rank: 1 / its position in that top k, 0 if it is not there.
+  The mean over questions is MRR.
 
-Each is computed twice: exact ID match, and "parent level", where T1059.001
-and T1059 count as the same family. Exact is the headline; parent level shows
-how many misses are near misses within the right family.
+The answer pipeline builds its context from the same top k techniques, so
+hit@k is exactly "was the right technique in front of the LLM".
+
+Each metric is computed twice: exact ID match, and "parent level", where
+T1059.001 and T1059 count as one family. Exact is the headline; parent level
+shows how many misses are near misses within the right family.
 """
+import numpy as np
+
 from copilot.index import Hit
 
 
@@ -36,32 +40,52 @@ def ranked_technique_ids(hits: list[Hit], parent_level: bool = False) -> list[st
 
 
 def hit_at_k(hits: list[Hit], gold: str, k: int = 5, parent_level: bool = False) -> bool:
-    return _key(gold, parent_level) in {_key(h.technique_id, parent_level) for h in hits[:k]}
+    return _key(gold, parent_level) in ranked_technique_ids(hits, parent_level)[:k]
 
 
-def reciprocal_rank(hits: list[Hit], gold: str, parent_level: bool = False) -> float:
-    ranked = ranked_technique_ids(hits, parent_level)
+def reciprocal_rank(hits: list[Hit], gold: str, k: int = 5, parent_level: bool = False) -> float:
+    top = ranked_technique_ids(hits, parent_level)[:k]
     key = _key(gold, parent_level)
-    return 1.0 / (ranked.index(key) + 1) if key in ranked else 0.0
+    return 1.0 / (top.index(key) + 1) if key in top else 0.0
 
 
 def score_question(hits: list[Hit], gold: str, k: int = 5) -> dict:
     return {
         "hit": hit_at_k(hits, gold, k),
-        "rr": reciprocal_rank(hits, gold),
+        "rr": reciprocal_rank(hits, gold, k),
         "hit_parent": hit_at_k(hits, gold, k, parent_level=True),
-        "rr_parent": reciprocal_rank(hits, gold, parent_level=True),
+        "rr_parent": reciprocal_rank(hits, gold, k, parent_level=True),
     }
 
 
-def summarise(scores: list[dict]) -> dict:
-    n = len(scores)
+def bootstrap_ci(values: list[float], n_resamples: int = 10_000, seed: int = 0) -> tuple[float, float]:
+    """95% percentile bootstrap interval for the mean.
+
+    Resample the questions with replacement many times and see how much the
+    mean moves. It needs no assumption about the shape of the scores, which
+    matters for reciprocal ranks (they are not bell-shaped).
+    """
+    data = np.asarray(values, dtype=float)
+    rng = np.random.default_rng(seed)
+    means = data[rng.integers(0, len(data), size=(n_resamples, len(data)))].mean(axis=1)
+    lo, hi = np.percentile(means, [2.5, 97.5])
+    return float(lo), float(hi)
+
+
+def summarise(rows: list[dict]) -> dict:
+    n = len(rows)
     if n == 0:
         return {"n": 0}
+    hit = [float(r["hit"]) for r in rows]
+    rr = [r["rr"] for r in rows]
     return {
         "n": n,
-        "hit_rate": sum(s["hit"] for s in scores) / n,
-        "mrr": sum(s["rr"] for s in scores) / n,
-        "hit_rate_parent": sum(s["hit_parent"] for s in scores) / n,
-        "mrr_parent": sum(s["rr_parent"] for s in scores) / n,
+        "hits": int(sum(hit)),
+        "hit_rate": sum(hit) / n,
+        "hit_rate_ci": bootstrap_ci(hit),
+        "mrr": sum(rr) / n,
+        "mrr_ci": bootstrap_ci(rr),
+        "hits_parent": sum(bool(r["hit_parent"]) for r in rows),
+        "hit_rate_parent": sum(r["hit_parent"] for r in rows) / n,
+        "mrr_parent": sum(r["rr_parent"] for r in rows) / n,
     }

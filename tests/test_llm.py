@@ -140,3 +140,13 @@ def test_gemini_does_not_retry_other_errors():
     with pytest.raises(LLMError, match="bad request"):
         provider.generate("s", "p")
     assert len(models.calls) == 1 and waits == []
+
+
+class Overloaded(Exception):
+    code = 503
+
+
+def test_gemini_retries_when_the_service_is_temporarily_overloaded():
+    provider, models, waits = flaky_gemini(failures=1, error=Overloaded("high demand"))
+    assert provider.generate("s", "p") == "answer"
+    assert len(models.calls) == 2 and len(waits) == 1

@@ -22,7 +22,8 @@ class FakeProvider:
 @pytest.fixture
 def app(monkeypatch):
     monkeypatch.setattr(index, "index_exists", lambda *a, **k: True)
-    monkeypatch.setattr(index, "vector_search", lambda query, k=5, **kw: HITS)
+    monkeypatch.setattr(index, "vector_search", lambda *a, **kw: HITS)
+    monkeypatch.setattr(config, "APP_RETRIEVER", "vector")
     return AppTest.from_file(str(config.ROOT / "app.py"), default_timeout=30)
 
 

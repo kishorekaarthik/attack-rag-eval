@@ -53,9 +53,9 @@ def test_answer_retrieves_k_then_asks_provider_with_grounding_rules():
         return HITS
 
     provider = FakeProvider("PowerShell abuse is T1059.001 [T1059.001].")
-    result = answer("How is PowerShell abused?", retriever, provider, k=5)
+    result = answer("How is PowerShell abused?", retriever, provider)
 
-    assert asked["args"] == ("How is PowerShell abused?", 5)
+    assert asked["args"] == ("How is PowerShell abused?", 30)
     [(system, prompt, temperature)] = provider.calls
     assert system == SYSTEM_PROMPT
     assert prompt == build_prompt("How is PowerShell abused?", HITS)

@@ -6,13 +6,11 @@ from copilot.evals.metrics import ranked_technique_ids, score_question, summaris
 from copilot.index import Hit
 
 
-def evaluate(questions: list[Question], retriever: Callable[[str, int], list[Hit]], k: int = 5, depth: int = 20) -> dict:
+def evaluate(questions: list[Question], retriever: Callable[[str, int], list[Hit]], k: int = 5, depth: int = 30) -> dict:
     """Score every question.
 
-    `k` is how many chunks the LLM would be given (hit@k is measured there).
-    `depth` is how far down the list we look for the reciprocal rank, so a
-    correct technique at position 8 still earns 1/8 instead of zero and an
-    improvement from "nowhere" to "nearly there" is visible.
+    `depth` is how many chunks to fetch so that at least `k` distinct
+    techniques come back; the metrics then look at the top `k` techniques.
     """
     rows = []
     for q in questions:

@@ -28,7 +28,7 @@ class Question:
     id: str
     question: str
     technique_id: str
-    source: str  # "owner" | "generated"
+    source: str  # "independent" | "generated"
     split: str | None = None  # "dev" | "test"
     note: str = ""
 

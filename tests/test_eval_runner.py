@@ -11,7 +11,7 @@ def hits(*ids):
 
 
 QUESTIONS = [
-    Question(id="o001", question="q1", technique_id="T1486", source="owner", split="dev"),
+    Question(id="i001", question="q1", technique_id="T1486", source="independent", split="dev"),
     Question(id="g001", question="q2", technique_id="T1059.001", source="generated", split="dev"),
     Question(id="g002", question="q3", technique_id="T1003", source="generated", split="test"),
 ]
@@ -29,19 +29,19 @@ def test_evaluate_reports_overall_and_per_source_summaries():
         calls.append(k)
         return RESULTS[query]
 
-    report = evaluate(QUESTIONS, retriever, k=5, depth=20)
+    report = evaluate(QUESTIONS, retriever, k=5, depth=30)
 
-    assert calls == [20, 20, 20]
+    assert calls == [30, 30, 30]
     assert report["summary"]["overall"]["n"] == 3
     assert report["summary"]["overall"]["hit_rate"] == 2 / 3
     assert report["summary"]["overall"]["mrr"] == (1 + 0.5 + 0) / 3
-    assert report["summary"]["owner"] == {"n": 1, "hit_rate": 1.0, "mrr": 1.0, "hit_rate_parent": 1.0, "mrr_parent": 1.0}
+    assert report["summary"]["independent"]["hits"] == 1 and report["summary"]["independent"]["hit_rate"] == 1.0
     assert report["summary"]["generated"]["hit_rate"] == 0.5
     assert report["summary"]["generated"]["mrr"] == 0.25
 
 
 def test_evaluate_keeps_per_question_detail_for_error_analysis():
-    report = evaluate(QUESTIONS, lambda q, k: RESULTS[q], k=5, depth=20)
+    report = evaluate(QUESTIONS, lambda q, k: RESULTS[q], k=5, depth=30)
     miss = next(r for r in report["questions"] if r["id"] == "g002")
     assert miss["gold"] == "T1003" and miss["hit"] is False and miss["rank"] is None
     assert miss["retrieved"] == ["T1055"]

@@ -22,7 +22,25 @@ RAW_DIR = ROOT / "data" / "raw"
 CHROMA_DIR = ROOT / "chroma_db"
 COLLECTION = "attack_techniques"
 
-EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+# Embedding models: key -> (model name, instruction prepended to queries only).
+EMBED_MODELS = {
+    "minilm": ("sentence-transformers/all-MiniLM-L6-v2", ""),
+    "bge-small": ("BAAI/bge-small-en-v1.5", "Represent this sentence for searching relevant passages: "),
+}
+EMBED_MODEL = "minilm"
+
+RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+# Retrieval settings. Tuned on the dev split only (see docs/design.md).
+FUSION_CANDIDATES = 50   # chunks taken from each of vector search and BM25 before fusion
+RRF_K = 60               # reciprocal rank fusion constant
+RERANK_CANDIDATES = 30   # fused chunks the cross-encoder re-scores
+CONTEXT_TECHNIQUES = 5   # distinct techniques given to the LLM
+CONTEXT_CHUNKS_PER_TECHNIQUE = 2
+RETRIEVAL_DEPTH = 30     # chunks fetched so that 5 distinct techniques come back
+
+# Retrieval pipeline the app serves (a key of copilot.retrieval.PIPELINES).
+APP_RETRIEVER = "vector"
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
 

@@ -1,7 +1,9 @@
-"""Phase 1: download ATT&CK, parse techniques, chunk, index in ChromaDB.
+"""Download ATT&CK, parse techniques, chunk, index in ChromaDB.
 
-Run:  .venv/Scripts/python scripts/ingest.py
+  .venv/Scripts/python scripts/ingest.py                         # default embedding model
+  .venv/Scripts/python scripts/ingest.py --embed-model bge-small
 """
+import argparse
 import sys
 import time
 from collections import Counter
@@ -22,6 +24,10 @@ SAMPLE_QUERIES = [
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--embed-model", default=config.EMBED_MODEL, choices=sorted(config.EMBED_MODELS))
+    embed_model = parser.parse_args().embed_model
+
     techniques = load_techniques(bundle_path())
     subs = sum(t.is_subtechnique for t in techniques)
     print(f"ATT&CK enterprise v{config.ATTACK_VERSION}")
@@ -34,19 +40,19 @@ def main() -> None:
 
     # The embedding model reads at most max_seq_length tokens and silently
     # drops the rest, so check how many chunks actually fit.
-    model = embedder()
+    model = embedder(embed_model)
     lengths = [len(ids) for ids in model.tokenizer([c.text for c in chunks])["input_ids"]]
     over = sum(n > model.max_seq_length for n in lengths)
     print(f"  tokens per chunk: median {sorted(lengths)[len(lengths) // 2]}, max {max(lengths)}; "
           f"{over} of {len(chunks)} exceed the model's {model.max_seq_length}-token window")
 
     start = time.time()
-    build_index(chunks)
+    build_index(chunks, embed_model=embed_model)
     print(f"  indexed into {config.CHROMA_DIR.name}/ in {time.time() - start:.0f}s\n")
 
     for query in SAMPLE_QUERIES:
         print(f"Q: {query}")
-        for hit in vector_search(query, k=5):
+        for hit in vector_search(query, k=5, embed_model=embed_model):
             print(f"   {hit.score:.3f}  {hit.technique_id:<10} {hit.name}  [{hit.section}]")
         print()
 
