@@ -112,9 +112,11 @@ Result: 2,472 chunks (1,508 description, 964 detection).
 
 ## Answering
 
-- **Top 5 chunks, numbered, in the prompt.** The system prompt requires
-  answering only from the context, citing IDs in square brackets, and saying
-  so when the context does not cover the question.
+- **Top 5 chunks in the prompt, each labelled with its technique ID.** The
+  system prompt requires answering only from the context, citing those IDs in
+  square brackets, and saying so when the context does not cover the question.
+  Passages were first numbered `[1]`..`[5]`; the model then cited the numbers
+  instead of technique IDs, so the label was changed to the ID itself.
 - **Temperature 0**, so the same question and context give the same answer.
 - **Citations are filtered to retrieved IDs.** A technique the model cites
   that was not in the context cannot have come from the context, and is not
@@ -130,12 +132,15 @@ other module imports a vendor library.
 
 | Provider | Model (pinned) | Status |
 |---|---|---|
-| Gemini | `gemini-2.5-flash-lite` | Default |
+| Gemini | `gemini-3.1-flash-lite` | Default |
 | Claude | `claude-haiku-5-5` | Implemented, mock-tested; not yet run against the real API |
 
-`gemini-2.5-flash-lite` was the cheapest stable Flash-family model on the
-pricing page on 2026-11-16 ($0.10 input / $0.40 output per 1M tokens), with no
-shutdown date announced.
+`gemini-3.1-flash-lite` was the cheapest Flash-family model open to new API
+keys on 2026-11-17 ($0.25 input / $1.50 output per 1M tokens). The cheaper
+`gemini-2.5-flash-lite` is listed on the pricing page but closed to new
+users. Google lists a shutdown date of 2027-05-07 for 3.1 and names
+`gemini-3.5-flash-lite` as its replacement; switching is a one-line change in
+`copilot/config.py`.
 
 The Claude provider calls the Messages API over plain HTTP with `httpx`
 rather than the vendor SDK. The SDK depends on a compiled module that Windows

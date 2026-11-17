@@ -13,8 +13,9 @@ from copilot.llm import LLMProvider
 SYSTEM_PROMPT = """You are a security analyst assistant grounded in MITRE ATT&CK.
 
 Rules:
-- Answer using only the numbered context passages. Do not use outside knowledge.
-- Cite the technique ID in square brackets, e.g. [T1059.001], for every claim.
+- Answer using only the context passages. Do not use outside knowledge.
+- Each passage is labelled with its technique ID in square brackets. Cite that
+  technique ID, e.g. [T1059.001], for every claim. Never cite by passage number.
 - Only cite technique IDs that appear in the context.
 - If the context does not cover the question, say so plainly and do not guess.
 - Be concise: a short direct answer, then detection guidance if the context has any."""
@@ -33,7 +34,9 @@ class Answer:
 
 
 def build_prompt(question: str, hits: list[Hit]) -> str:
-    context = "\n\n".join(f"[{i}] {h.text}" for i, h in enumerate(hits, start=1))
+    # Each passage is labelled with the ID to cite. Numbering them [1], [2] made
+    # the model cite the numbers instead of the technique.
+    context = "\n\n".join(f"[{h.technique_id}]\n{h.text}" for h in hits)
     return f"Context:\n{context}\n\nQuestion: {question}"
 
 

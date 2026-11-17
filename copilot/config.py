@@ -27,8 +27,9 @@ EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
 
 # Exact model IDs are pinned so eval results name the model that produced them.
-# gemini-2.5-flash-lite: cheapest stable Gemini Flash-family model on the
-# pricing page as of 2026-11-16 ($0.10 in / $0.40 out per 1M tokens), with no
-# shutdown date announced.
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+# gemini-3.1-flash-lite: cheapest Gemini Flash-family model open to new API
+# keys on 2026-11-17 ($0.25 in / $1.50 out per 1M tokens). The cheaper
+# gemini-2.5-flash-lite is closed to new users. Google lists a shutdown date
+# of 2027-05-07 for 3.1, with gemini-3.5-flash-lite as the replacement.
+GEMINI_MODEL = "gemini-3.1-flash-lite"
 CLAUDE_MODEL = "claude-haiku-5-5"

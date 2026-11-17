@@ -26,10 +26,12 @@ class FakeProvider:
         return self.reply
 
 
-def test_prompt_contains_every_chunk_numbered_and_the_question():
+def test_prompt_labels_each_chunk_with_its_technique_id_not_a_number():
+    # Numbered passages ([1], [2]) led the live model to cite the numbers instead of technique IDs.
     prompt = build_prompt("How is PowerShell abused?", HITS)
-    assert "[1] T1059.001 PowerShell (tactics: x)\nAdversaries abuse PowerShell." in prompt
-    assert "[2] T1053.005 Scheduled Task (tactics: x)\nAdversaries abuse the Task Scheduler." in prompt
+    assert "[T1059.001]\nT1059.001 PowerShell (tactics: x)\nAdversaries abuse PowerShell." in prompt
+    assert "[T1053.005]\nT1053.005 Scheduled Task (tactics: x)\nAdversaries abuse the Task Scheduler." in prompt
+    assert "[1]" not in prompt and "[2]" not in prompt
     assert prompt.rstrip().endswith("Question: How is PowerShell abused?")
 
 
