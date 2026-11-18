@@ -1,3 +1,5 @@
+import pytest
+
 from copilot.evals.metrics import (bootstrap_ci, hit_at_k, ranked_technique_ids, reciprocal_rank, score_question,
                                    summarise)
 from copilot.index import Hit
@@ -90,3 +92,49 @@ def test_summarise_reports_raw_counts_rates_and_intervals():
 
 def test_summarise_of_nothing_is_just_a_zero_count():
     assert summarise([]) == {"n": 0}
+
+
+# --- paired comparison ---------------------------------------------------------------------
+
+def test_mcnemar_exact_matches_the_binomial_tail():
+    from copilot.evals.metrics import mcnemar_exact
+
+    # 10 discordant pairs split 8/2: two-sided p = 2 * P(X <= 2), X ~ Bin(10, 0.5) = 2 * 56/1024
+    assert mcnemar_exact(8, 2) == pytest.approx(112 / 1024)
+    assert mcnemar_exact(2, 8) == mcnemar_exact(8, 2)
+
+
+def test_mcnemar_is_one_when_there_is_no_disagreement_or_an_even_split():
+    from copilot.evals.metrics import mcnemar_exact
+
+    assert mcnemar_exact(0, 0) == 1.0
+    assert mcnemar_exact(5, 5) == 1.0
+
+
+def test_paired_comparison_counts_fixed_and_broke_and_the_difference():
+    from copilot.evals.metrics import paired_comparison
+
+    before = [True] * 50 + [False] * 50
+    after = [True] * 45 + [False] * 5 + [True] * 20 + [False] * 30   # broke 5, fixed 20
+    r = paired_comparison(before, after)
+    assert (r["n"], r["fixed"], r["broke"]) == (100, 20, 5)
+    assert (r["hits_before"], r["hits_after"]) == (50, 65)
+    assert r["diff"] == pytest.approx(0.15)
+    assert r["diff_ci"][0] < 0.15 < r["diff_ci"][1]
+    assert r["diff_ci"][0] > 0          # 20 vs 5 discordant is a clear improvement
+    assert r["p_value"] < 0.01
+
+
+def test_paired_ci_comes_only_from_discordant_questions():
+    from copilot.evals.metrics import paired_comparison
+
+    same = [True, False] * 50
+    r = paired_comparison(same, same)
+    assert (r["fixed"], r["broke"], r["diff"], r["diff_ci"], r["p_value"]) == (0, 0, 0.0, (0.0, 0.0), 1.0)
+
+
+def test_paired_comparison_rejects_unpaired_inputs():
+    from copilot.evals.metrics import paired_comparison
+
+    with pytest.raises(ValueError, match="same questions"):
+        paired_comparison([True, False], [True])

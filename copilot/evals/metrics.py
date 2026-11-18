@@ -89,3 +89,49 @@ def summarise(rows: list[dict]) -> dict:
         "hit_rate_parent": sum(r["hit_parent"] for r in rows) / n,
         "mrr_parent": sum(r["rr_parent"] for r in rows) / n,
     }
+
+
+# --- paired comparison of two pipelines on the same questions -------------------------------
+#
+# Two pipelines scored on the same questions are not independent samples, so
+# comparing their separate confidence intervals is the wrong test: questions
+# both get right (or both get wrong) say nothing about which is better. Only
+# the discordant questions do, the ones fixed or broken by the change.
+
+def mcnemar_exact(fixed: int, broke: int) -> float:
+    """Two-sided exact McNemar p-value.
+
+    Under "no difference", each discordant question is equally likely to be
+    a fix or a break, so `fixed` ~ Binomial(fixed + broke, 0.5).
+    """
+    from math import comb
+
+    n = fixed + broke
+    if n == 0:
+        return 1.0
+    tail = sum(comb(n, i) for i in range(min(fixed, broke) + 1)) / 2 ** n
+    return min(1.0, 2 * tail)
+
+
+def paired_comparison(before: list[bool], after: list[bool], n_resamples: int = 10_000, seed: int = 0) -> dict:
+    """Compare per-question hits of two pipelines run on the same questions in the same order.
+
+    The bootstrap resamples questions (keeping each question's pair of
+    outcomes together) and records the difference in hit rate each time.
+    """
+    if len(before) != len(after):
+        raise ValueError("paired comparison needs results for the same questions in the same order")
+    b = np.asarray(before, dtype=float)
+    a = np.asarray(after, dtype=float)
+    n = len(b)
+    fixed = int(((a == 1) & (b == 0)).sum())
+    broke = int(((a == 0) & (b == 1)).sum())
+    delta = a - b
+    rng = np.random.default_rng(seed)
+    means = delta[rng.integers(0, n, size=(n_resamples, n))].mean(axis=1)
+    lo, hi = np.percentile(means, [2.5, 97.5])
+    return {
+        "n": n, "hits_before": int(b.sum()), "hits_after": int(a.sum()),
+        "fixed": fixed, "broke": broke, "diff": float(delta.mean()),
+        "diff_ci": (float(lo), float(hi)), "p_value": mcnemar_exact(fixed, broke),
+    }

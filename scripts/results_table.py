@@ -13,13 +13,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from copilot import config  # noqa: E402
 
-ORDER = ["vector", "hybrid", "hybrid_rerank", "vector_bge", "hybrid_rerank_bge"]
+ORDER = ["vector", "vector_desc", "hybrid", "hybrid_rerank", "vector_proc", "hybrid_proc", "hybrid_proc_llm",
+         "vector_bge", "hybrid_rerank_bge"]
 LABELS = {
     "vector": "Vector search, MiniLM (baseline)",
+    "vector_desc": "Vector, description chunks only",
     "hybrid": "+ BM25 hybrid (RRF)",
-    "hybrid_rerank": "+ cross-encoder reranker",
+    "hybrid_rerank": "+ BM25 hybrid + cross-encoder reranker",
+    "vector_proc": "Vector + procedure examples",
+    "hybrid_proc": "BM25 hybrid + procedure examples",
+    "hybrid_proc_llm": "BM25 hybrid + procedure examples + Gemini reranker",
     "vector_bge": "Vector search, bge-small (embedding swap only)",
-    "hybrid_rerank_bge": "bge-small + BM25 hybrid + reranker",
+    "hybrid_rerank_bge": "bge-small + BM25 hybrid + cross-encoder",
 }
 SETS = [("overall", "all"), ("independent", "independent set"), ("generated", "generated set")]
 
