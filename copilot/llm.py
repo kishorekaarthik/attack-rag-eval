@@ -42,9 +42,9 @@ class GeminiProvider:
     # Seconds to wait after each rate-limit reply. The free tier allows 15
     # requests a minute, so eval runs of 100+ calls must pace themselves.
     RETRY_WAITS = (15, 30, 60, 60)
-    RETRY_CODES = (429, 503)  # rate limited, temporarily overloaded
+    RETRY_CODES = (429, 500, 503, 504)  # rate limited, internal error, overloaded, server deadline
     # Without a timeout a reply that never arrives blocks the eval forever (seen in practice).
-    TIMEOUT_SECONDS = 60
+    TIMEOUT_SECONDS = 120
 
     def __init__(self, api_key: str, model: str = config.GEMINI_MODEL, client=None, sleep=time.sleep,
                  clock=time.perf_counter):

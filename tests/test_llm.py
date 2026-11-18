@@ -203,3 +203,18 @@ def test_gemini_retries_timeouts_from_any_http_library():
 def test_gemini_retries_builtin_timeout_errors():
     provider, models, waits = flaky_gemini(failures=1, error=TimeoutError("timed out"))
     assert provider.generate("s", "p") == "answer"
+
+
+class DeadlineExceeded(Exception):
+    code = 504
+
+
+class InternalError(Exception):
+    code = 500
+
+
+@pytest.mark.parametrize("error", [DeadlineExceeded("deadline expired"), InternalError("internal")])
+def test_gemini_retries_server_side_timeouts_and_internal_errors(error):
+    provider, models, waits = flaky_gemini(failures=1, error=error)
+    assert provider.generate("s", "p") == "answer"
+    assert len(models.calls) == 2
