@@ -150,8 +150,10 @@ API is a single POST request.
 ## Evaluation
 
 **Question set.** 333 questions, each mapped to one technique ID: an
-*independent set* of 25 written by hand, and a *generated set* of 308 written
-by `gemini-3.1-flash-lite` from technique text (sampled in turn across tactics
+*independent set* of 25 questions written independently by a different
+model, without access to the indexed corpus, then ID-checked against the
+pinned ATT&CK release; and a *generated set* of 308 written by
+`gemini-3.1-flash-lite` from technique text (sampled in turn across tactics
 with a fixed seed, one technique per question, excluding techniques the
 independent set covers). Scores are reported for each set separately.
 Generated questions are written from the same text that is indexed and may
@@ -161,7 +163,7 @@ questions it is small.
 **Validation before every run.** The eval refuses to start if any answer-key
 ID is revoked, deprecated or unknown in the pinned release, or if a question
 names its technique or ID. A revoked ID is never indexed, so such a question
-would silently score as a miss. Two hand-written questions originally used
+would silently score as a miss. Two independent-set questions originally used
 IDs that MITRE revoked (`T1070.001` to `T1685.005`, `T1562.001` to `T1685`);
 they were remapped using the bundle's `revoked-by` relationships, with the
 original ID kept in a note field.

@@ -1,8 +1,8 @@
-"""Phase 3: build data/eval/questions.jsonl from the hand-written and generated questions.
+"""Phase 3: build data/eval/questions.jsonl from the independent and generated question sets.
 
   .venv/Scripts/python scripts/build_eval_set.py --generate   # top up the generated set with the LLM, then build
   .venv/Scripts/python scripts/build_eval_set.py              # rebuild from the two CSV files
-  .venv/Scripts/python scripts/build_eval_set.py --independent-only # hand-written questions only (no API key needed)
+  .venv/Scripts/python scripts/build_eval_set.py --independent-only # independent set only (no API key needed)
 """
 import argparse
 import csv
@@ -66,7 +66,7 @@ def generate(techniques, exclude: set[str]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--generate", action="store_true", help="top up the generated set with the configured LLM")
-    parser.add_argument("--independent-only", action="store_true", help="build from the hand-written questions only")
+    parser.add_argument("--independent-only", action="store_true", help="build from the independent set only")
     args = parser.parse_args()
 
     path = bundle_path()

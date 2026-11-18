@@ -1,6 +1,7 @@
 """Generate scenario-style eval questions from technique text with an LLM.
 
-The hand-written questions are the trustworthy core but there are only 25.
+The independent set (25 questions written by a different model without access
+to the indexed corpus) is the stricter test, but it is small.
 Generated questions add volume and coverage across tactics. They are reported
 separately because a model writing questions from the same text we index may
 echo its wording, which makes them easier for retrieval than real questions.
