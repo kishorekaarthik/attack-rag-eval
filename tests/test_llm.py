@@ -188,3 +188,18 @@ def test_gemini_client_is_created_with_a_request_timeout(monkeypatch):
     monkeypatch.setattr(google.genai, "Client", FakeClient)
     GeminiProvider(api_key="k", model="m")
     assert seen["timeout_ms"] == GeminiProvider.TIMEOUT_SECONDS * 1000
+
+
+class ReadTimeout(Exception):
+    """Stand-in for google-genai's bundled httpx2.ReadTimeout, which is not an httpx class."""
+
+
+def test_gemini_retries_timeouts_from_any_http_library():
+    provider, models, waits = flaky_gemini(failures=1, error=ReadTimeout("The read operation timed out"))
+    assert provider.generate("s", "p") == "answer"
+    assert len(models.calls) == 2 and len(waits) == 1
+
+
+def test_gemini_retries_builtin_timeout_errors():
+    provider, models, waits = flaky_gemini(failures=1, error=TimeoutError("timed out"))
+    assert provider.generate("s", "p") == "answer"

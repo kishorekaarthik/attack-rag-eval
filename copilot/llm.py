@@ -28,6 +28,15 @@ class LLMError(RuntimeError):
     """The provider returned an error."""
 
 
+def _is_timeout(exc: Exception) -> bool:
+    """True for a timeout from any HTTP library.
+
+    google-genai raises timeouts from its own bundled copy of httpx
+    (httpx2.ReadTimeout), which is not an httpx class, so match by type name.
+    """
+    return isinstance(exc, (TimeoutError, httpx.TimeoutException)) or "timeout" in type(exc).__name__.lower()
+
+
 class GeminiProvider:
     name = "gemini"
     # Seconds to wait after each rate-limit reply. The free tier allows 15
@@ -72,7 +81,7 @@ class GeminiProvider:
                 return resp.text or ""
             except Exception as exc:  # the SDK raises several unrelated error types
                 self._clock()  # keep the clock sequence predictable: one reading at the end of every attempt
-                retryable = getattr(exc, "code", None) in self.RETRY_CODES or isinstance(exc, httpx.TimeoutException)
+                retryable = getattr(exc, "code", None) in self.RETRY_CODES or _is_timeout(exc)
                 if retryable and wait is not None:
                     self._sleep(wait)
                     continue
