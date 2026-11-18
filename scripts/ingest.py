@@ -26,7 +26,10 @@ SAMPLE_QUERIES = [
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--embed-model", default=config.EMBED_MODEL, choices=sorted(config.EMBED_MODELS))
-    embed_model = parser.parse_args().embed_model
+    parser.add_argument("--corpus", default="base", choices=["base", "procedures"],
+                        help="procedures: also index real-world usage examples for each technique")
+    args = parser.parse_args()
+    embed_model, corpus = args.embed_model, args.corpus
 
     techniques = load_techniques(bundle_path())
     subs = sum(t.is_subtechnique for t in techniques)
@@ -34,7 +37,7 @@ def main() -> None:
     print(f"  techniques: {len(techniques)}  ({len(techniques) - subs} parents, {subs} sub-techniques)")
     print(f"  with detection text: {sum(bool(t.detection) for t in techniques)}")
 
-    chunks = [c for t in techniques for c in chunk_technique(t)]
+    chunks = [c for t in techniques for c in chunk_technique(t, procedures=corpus == "procedures")]
     by_section = Counter(c.section for c in chunks)
     print(f"  chunks: {len(chunks)}  {dict(by_section)}")
 
@@ -47,12 +50,12 @@ def main() -> None:
           f"{over} of {len(chunks)} exceed the model's {model.max_seq_length}-token window")
 
     start = time.time()
-    build_index(chunks, embed_model=embed_model)
+    build_index(chunks, embed_model=embed_model, corpus=corpus)
     print(f"  indexed into {config.CHROMA_DIR.name}/ in {time.time() - start:.0f}s\n")
 
     for query in SAMPLE_QUERIES:
         print(f"Q: {query}")
-        for hit in vector_search(query, k=5, embed_model=embed_model):
+        for hit in vector_search(query, k=5, embed_model=embed_model, corpus=corpus):
             print(f"   {hit.score:.3f}  {hit.technique_id:<10} {hit.name}  [{hit.section}]")
         print()
 

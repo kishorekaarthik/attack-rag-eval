@@ -1,0 +1,18 @@
+{
+  "vector": {
+    "n": 233,
+    "recall@5": 112,
+    "recall@10": 153,
+    "recall@20": 181,
+    "recall@50": 205,
+    "techniques_per_question_median": null
+  },
+  "hybrid": {
+    "n": 233,
+    "recall@5": 115,
+    "recall@10": 158,
+    "recall@20": 183,
+    "recall@50": 209,
+    "techniques_per_question_median": null
+  }
+}
