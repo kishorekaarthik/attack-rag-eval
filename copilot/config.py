@@ -56,4 +56,6 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
 # gemini-2.5-flash-lite is closed to new users. Google lists a shutdown date
 # of 2027-05-07 for 3.1, with gemini-3.5-flash-lite as the replacement.
 GEMINI_MODEL = "gemini-3.1-flash-lite"
+# Paid-tier price (USD per 1M tokens: input, output) on 2026-11-17, used for cost reporting.
+GEMINI_PRICE_PER_M_TOKENS = (0.25, 1.50)
 CLAUDE_MODEL = "claude-haiku-5-5"

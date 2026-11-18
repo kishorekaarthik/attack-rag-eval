@@ -35,9 +35,12 @@ class GeminiProvider:
     RETRY_WAITS = (15, 30, 60, 60)
     RETRY_CODES = (429, 503)  # rate limited, temporarily overloaded
 
-    def __init__(self, api_key: str, model: str = config.GEMINI_MODEL, client=None, sleep=time.sleep):
+    def __init__(self, api_key: str, model: str = config.GEMINI_MODEL, client=None, sleep=time.sleep,
+                 clock=time.perf_counter):
         self.model = model
-        self._sleep = sleep
+        self._sleep, self._clock = sleep, clock
+        # Tokens and request time of the last successful call (retry waits excluded), for cost reporting.
+        self.last_usage: dict | None = None
         if client is None:
             from google import genai  # imported here so tests and Claude-only runs don't need it
 
@@ -52,10 +55,20 @@ class GeminiProvider:
             contents=prompt,
             config=types.GenerateContentConfig(system_instruction=system, temperature=temperature),
         )
-        for wait in (*self.RETRY_WAITS, None):
+        for attempt, wait in enumerate((*self.RETRY_WAITS, None), start=1):
+            start = self._clock()
             try:
-                return self._client.models.generate_content(**request).text or ""
+                resp = self._client.models.generate_content(**request)
+                seconds = self._clock() - start
+                usage = getattr(resp, "usage_metadata", None)
+                self.last_usage = {
+                    "input_tokens": getattr(usage, "prompt_token_count", None) or 0,
+                    "output_tokens": getattr(usage, "candidates_token_count", None) or 0,
+                    "seconds": seconds, "attempts": attempt,
+                }
+                return resp.text or ""
             except Exception as exc:  # the SDK raises several unrelated error types
+                self._clock()  # keep the clock sequence predictable: one reading at the end of every attempt
                 if getattr(exc, "code", None) in self.RETRY_CODES and wait is not None:
                     self._sleep(wait)
                     continue

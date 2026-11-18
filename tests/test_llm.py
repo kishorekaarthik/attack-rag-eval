@@ -150,3 +150,22 @@ def test_gemini_retries_when_the_service_is_temporarily_overloaded():
     provider, models, waits = flaky_gemini(failures=1, error=Overloaded("high demand"))
     assert provider.generate("s", "p") == "answer"
     assert len(models.calls) == 2 and len(waits) == 1
+
+
+def test_gemini_records_tokens_and_request_time_excluding_retry_waits():
+    usage = type("Usage", (), {"prompt_token_count": 1200, "candidates_token_count": 40})()
+    models = FakeGeminiModels()
+    state = {"fail": 1}
+
+    def generate_content(**kwargs):
+        if state["fail"]:
+            state["fail"] -= 1
+            raise RateLimited("quota")
+        return type("Resp", (), {"text": "T1001", "usage_metadata": usage})()
+
+    models.generate_content = generate_content
+    ticks = iter([0.0, 0.5, 10.0, 10.8])          # failed attempt 0.5 s, wait, successful attempt 0.8 s
+    provider = GeminiProvider(api_key="k", model="m", client=type("Client", (), {"models": models})(),
+                              sleep=lambda s: None, clock=lambda: next(ticks))
+    provider.generate("s", "p")
+    assert provider.last_usage == {"input_tokens": 1200, "output_tokens": 40, "seconds": pytest.approx(0.8), "attempts": 2}
