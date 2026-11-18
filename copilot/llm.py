@@ -34,6 +34,8 @@ class GeminiProvider:
     # requests a minute, so eval runs of 100+ calls must pace themselves.
     RETRY_WAITS = (15, 30, 60, 60)
     RETRY_CODES = (429, 503)  # rate limited, temporarily overloaded
+    # Without a timeout a reply that never arrives blocks the eval forever (seen in practice).
+    TIMEOUT_SECONDS = 60
 
     def __init__(self, api_key: str, model: str = config.GEMINI_MODEL, client=None, sleep=time.sleep,
                  clock=time.perf_counter):
@@ -43,8 +45,9 @@ class GeminiProvider:
         self.last_usage: dict | None = None
         if client is None:
             from google import genai  # imported here so tests and Claude-only runs don't need it
+            from google.genai import types
 
-            client = genai.Client(api_key=api_key)
+            client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=self.TIMEOUT_SECONDS * 1000))
         self._client = client
 
     def generate(self, system: str, prompt: str, temperature: float = 0.0) -> str:
@@ -69,7 +72,8 @@ class GeminiProvider:
                 return resp.text or ""
             except Exception as exc:  # the SDK raises several unrelated error types
                 self._clock()  # keep the clock sequence predictable: one reading at the end of every attempt
-                if getattr(exc, "code", None) in self.RETRY_CODES and wait is not None:
+                retryable = getattr(exc, "code", None) in self.RETRY_CODES or isinstance(exc, httpx.TimeoutException)
+                if retryable and wait is not None:
                     self._sleep(wait)
                     continue
                 raise LLMError(f"Gemini request failed: {exc}") from exc

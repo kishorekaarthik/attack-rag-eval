@@ -169,3 +169,22 @@ def test_gemini_records_tokens_and_request_time_excluding_retry_waits():
                               sleep=lambda s: None, clock=lambda: next(ticks))
     provider.generate("s", "p")
     assert provider.last_usage == {"input_tokens": 1200, "output_tokens": 40, "seconds": pytest.approx(0.8), "attempts": 2}
+
+
+def test_gemini_retries_when_a_request_times_out():
+    provider, models, waits = flaky_gemini(failures=1, error=httpx.ReadTimeout("no reply"))
+    assert provider.generate("s", "p") == "answer"
+    assert len(models.calls) == 2 and len(waits) == 1
+
+
+def test_gemini_client_is_created_with_a_request_timeout(monkeypatch):
+    seen = {}
+
+    class FakeClient:
+        def __init__(self, api_key, http_options=None):
+            seen["timeout_ms"] = getattr(http_options, "timeout", None)
+
+    import google.genai
+    monkeypatch.setattr(google.genai, "Client", FakeClient)
+    GeminiProvider(api_key="k", model="m")
+    assert seen["timeout_ms"] == GeminiProvider.TIMEOUT_SECONDS * 1000
