@@ -36,10 +36,14 @@ def cell(count: int, n: int, rate: float, ci=None) -> str:
 
 
 def main() -> None:
+    # Exact file names only: extra runs live in results/repeats/ and results/shipped/
+    # and must never override the canonical result for a pipeline.
     reports = {}
-    for path in sorted((config.ROOT / "results").glob("retrieval_*.json")):
-        report = json.loads(path.read_text(encoding="utf-8"))
-        reports[(report["config"]["retriever"], report["config"]["split"])] = report["summary"]
+    for retriever in ORDER:
+        for split in ("dev", "test"):
+            path = config.ROOT / "results" / f"retrieval_{retriever}_{split}.json"
+            if path.exists():
+                reports[(retriever, split)] = json.loads(path.read_text(encoding="utf-8"))["summary"]
 
     for split in ("dev", "test"):
         rows = [(r, reports[(r, split)]) for r in ORDER if (r, split) in reports]

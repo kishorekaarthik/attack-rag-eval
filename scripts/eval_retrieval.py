@@ -39,6 +39,8 @@ def main() -> int:
     parser.add_argument("--retriever", default="vector", choices=sorted(PIPELINES))
     parser.add_argument("--split", default="dev", choices=["dev", "test", "recent"])
     parser.add_argument("--questions", type=Path, default=QUESTIONS_PATH)
+    parser.add_argument("--out", type=Path, default=None,
+                        help="where to write the report (default: results/retrieval_<retriever>_<split>.json)")
     args = parser.parse_args()
 
     path = bundle_path()
@@ -69,8 +71,8 @@ def main() -> int:
         "fusion_candidates": config.FUSION_CANDIDATES, "rrf_k": config.RRF_K,
         "attack_version": config.ATTACK_VERSION, "date": date.today().isoformat(),
     }
-    out = config.ROOT / "results" / f"retrieval_{args.retriever}_{args.split}.json"
-    out.parent.mkdir(exist_ok=True)
+    out = args.out or config.ROOT / "results" / f"retrieval_{args.retriever}_{args.split}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"wrote {out.relative_to(config.ROOT)}\n")
     return 0
