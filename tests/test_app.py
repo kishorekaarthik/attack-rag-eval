@@ -49,3 +49,36 @@ def test_missing_key_shows_instructions_instead_of_crashing(app, monkeypatch):
     assert not app.exception
     assert any("GEMINI_API_KEY" in e.value for e in app.error)
     assert len(app.chat_input) == 0 or app.chat_input[0].disabled
+
+
+def test_app_serves_the_final_pipeline_by_default():
+    from copilot.retrieval import PIPELINES
+
+    assert config.APP_RETRIEVER == "hybrid_proc_llm"
+    assert PIPELINES[config.APP_RETRIEVER] == dict(corpus="procedures", bm25=True, llm_rerank=True)
+
+
+def test_first_start_builds_the_index_the_pipeline_searches(monkeypatch):
+    built = {}
+    monkeypatch.setattr(index, "index_exists", lambda *a, **k: False)
+    monkeypatch.setattr(index, "build_index", lambda chunks, **kw: built.update(kw, n=len(chunks),
+                        sections={c.section for c in chunks}))
+    monkeypatch.setattr(config, "APP_RETRIEVER", "hybrid_proc_llm")
+    monkeypatch.setattr(llm, "get_provider", lambda name=None: FakeProvider())
+    import streamlit as st
+
+    st.cache_resource.clear()  # prepare_index() is cached across AppTest runs in one process
+    app = AppTest.from_file(str(config.ROOT / "app.py"), default_timeout=120)
+    app.run()
+    assert not app.exception
+    assert built["corpus"] == "procedures" and "procedures" in built["sections"]
+
+
+def test_api_key_can_come_from_streamlit_secrets(app, monkeypatch):
+    # On Streamlit Community Cloud the key is entered as a secret, not in a .env file.
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setattr("copilot.config.LLM_PROVIDER", "gemini")
+    app.secrets["GEMINI_API_KEY"] = "from-secrets"
+    app.run()
+    assert not app.exception
+    assert not any("GEMINI_API_KEY" in e.value for e in app.error)

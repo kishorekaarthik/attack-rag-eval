@@ -1,4 +1,6 @@
 """Streamlit chat UI.  Run:  .venv/Scripts/python -m streamlit run app.py"""
+import os
+
 import streamlit as st
 
 from copilot import config, index, llm, retrieval
@@ -7,23 +9,42 @@ from copilot.rag import answer
 st.set_page_config(page_title="ATT&CK Copilot", page_icon="🛡️")
 
 
+def secrets_to_env() -> None:
+    """On Streamlit Community Cloud the API key is a secret, not a .env entry.
+
+    Copy top-level string secrets into the environment (without overriding
+    anything already set), so copilot.llm reads keys the same way everywhere.
+    """
+    try:
+        items = dict(st.secrets)
+    except Exception:  # no secrets file: local development with .env
+        return
+    for name, value in items.items():
+        if isinstance(value, str) and value.strip() and not os.environ.get(name, "").strip():
+            os.environ[name] = value
+
+
+secrets_to_env()
+
+
 PIPELINE = config.APP_RETRIEVER
 EMBED_MODEL = retrieval.PIPELINES[PIPELINE].get("embed_model", config.EMBED_MODEL)
+CORPUS = retrieval.PIPELINES[PIPELINE].get("corpus", "base")
 
 
-@st.cache_resource(show_spinner="Building the ATT&CK index (first run only, about two minutes)...")
+@st.cache_resource(show_spinner="Building the ATT&CK index (first run only, a few minutes)...")
 def prepare_index() -> bool:
     """Build the index once per server process if it is not on disk yet.
 
     On Streamlit Community Cloud the disk starts empty, so the first visitor
     after a restart triggers the build; everyone after that reuses it.
     """
-    if not index.index_exists(embed_model=EMBED_MODEL):
+    if not index.index_exists(embed_model=EMBED_MODEL, corpus=CORPUS):
         from copilot.attack import bundle_path, load_techniques
         from copilot.chunking import chunk_technique
 
-        chunks = [c for t in load_techniques(bundle_path()) for c in chunk_technique(t)]
-        index.build_index(chunks, embed_model=EMBED_MODEL)
+        chunks = [c for t in load_techniques(bundle_path()) for c in chunk_technique(t, procedures=CORPUS == "procedures")]
+        index.build_index(chunks, embed_model=EMBED_MODEL, corpus=CORPUS)
     return True
 
 
@@ -47,7 +68,8 @@ except (llm.MissingKeyError, ValueError) as exc:
 with st.sidebar:
     st.markdown(f"**Model:** `{provider.model}`")
     st.markdown(f"**ATT&CK:** enterprise v{config.ATTACK_VERSION}")
-    st.markdown(f"**Retrieval:** `{PIPELINE}`, top {config.CONTEXT_TECHNIQUES} techniques")
+    st.markdown("**Retrieval:** BM25 + vector hybrid over technique text and procedure examples, "
+                f"reranked by `{config.GEMINI_MODEL}`; top {config.CONTEXT_TECHNIQUES} techniques")
 
 prepare_index()
 

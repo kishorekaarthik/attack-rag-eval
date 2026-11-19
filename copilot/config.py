@@ -46,7 +46,7 @@ CONTEXT_CHUNKS_PER_TECHNIQUE = 2
 RETRIEVAL_DEPTH = 30     # chunks fetched so that 5 distinct techniques come back
 
 # Retrieval pipeline the app serves (a key of copilot.retrieval.PIPELINES).
-APP_RETRIEVER = "vector"
+APP_RETRIEVER = "hybrid_proc_llm"  # the configuration selected on dev and run once on test
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
 

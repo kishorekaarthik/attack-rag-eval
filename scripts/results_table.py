@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from copilot import config  # noqa: E402
 
-ORDER = ["vector", "vector_desc", "hybrid", "hybrid_rerank", "vector_proc", "hybrid_proc", "hybrid_proc_llm",
+ORDER = ["vector", "vector_desc", "hybrid", "hybrid_rerank", "vector_proc", "hybrid_proc", "hybrid_proc_llm", "hybrid_proc_llm35",
          "vector_bge", "hybrid_rerank_bge"]
 LABELS = {
     "vector": "Vector search, MiniLM (baseline)",
@@ -22,7 +22,8 @@ LABELS = {
     "hybrid_rerank": "+ BM25 hybrid + cross-encoder reranker",
     "vector_proc": "Vector + procedure examples",
     "hybrid_proc": "BM25 hybrid + procedure examples",
-    "hybrid_proc_llm": "BM25 hybrid + procedure examples + Gemini reranker",
+    "hybrid_proc_llm": "BM25 hybrid + procedure examples + Gemini reranker (final)",
+    "hybrid_proc_llm35": "Same, reranked by gemini-3.5-flash-lite (observation only)",
     "vector_bge": "Vector search, bge-small (embedding swap only)",
     "hybrid_rerank_bge": "bge-small + BM25 hybrid + cross-encoder",
 }
