@@ -4,6 +4,7 @@ import os
 import streamlit as st
 
 from copilot import config, index, llm, retrieval
+from copilot.limits import DailyLimit
 from copilot.rag import answer
 
 st.set_page_config(page_title="ATT&CK Copilot", page_icon="🛡️")
@@ -82,7 +83,35 @@ for msg in st.session_state.messages:
         if msg.get("hits"):
             render_sources(msg["hits"])
 
-if question := st.chat_input("Describe what you saw, or ask about a technique"):
+@st.cache_resource
+def daily_limit() -> DailyLimit:
+    """One counter for every visitor to this app process."""
+    return DailyLimit(config.DEMO_DAILY_LIMIT)
+
+
+SESSION_LIMIT_MESSAGE = (
+    f"You've reached the limit of {config.DEMO_SESSION_LIMIT} questions for this session. "
+    "This demo runs on a free API quota; to keep exploring, run it locally with your own key (see the README)."
+)
+DAILY_LIMIT_MESSAGE = (
+    "The demo has reached its daily question limit, which keeps it within a free API quota. "
+    "It resets at 00:00 UTC. You can also run it locally with your own key (see the README)."
+)
+
+asked = st.session_state.setdefault("questions_asked", 0)
+blocked = None
+if asked >= config.DEMO_SESSION_LIMIT:
+    blocked = SESSION_LIMIT_MESSAGE
+elif daily_limit().remaining() <= 0:
+    blocked = DAILY_LIMIT_MESSAGE
+
+question = st.chat_input("Describe what you saw, or ask about a technique", disabled=blocked is not None)
+if blocked:
+    st.warning(blocked)
+elif question and not daily_limit().try_acquire():  # another visitor took the last slot
+    st.warning(DAILY_LIMIT_MESSAGE)
+elif question:
+    st.session_state.questions_asked += 1
     st.session_state.messages.append({"role": "user", "text": question})
     with st.chat_message("user"):
         st.markdown(question)

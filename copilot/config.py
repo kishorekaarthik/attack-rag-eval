@@ -48,6 +48,12 @@ RETRIEVAL_DEPTH = 30     # chunks fetched so that 5 distinct techniques come bac
 # Retrieval pipeline the app serves (a key of copilot.retrieval.PIPELINES).
 APP_RETRIEVER = "hybrid_proc_llm"  # the configuration selected on dev and run once on test
 
+# Public demo limits. Each question makes two Gemini calls (rerank + answer); the
+# deployed app uses its own key, never the eval key.
+GEMINI_FREE_REQUESTS_PER_DAY = 500  # free tier, per model, as of 2026-11-19
+DEMO_SESSION_LIMIT = 10             # questions per browser session
+DEMO_DAILY_LIMIT = 100              # questions per day across all sessions: 200 of 500 requests
+
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
 
 # Exact model IDs are pinned so eval results name the model that produced them.

@@ -24,6 +24,9 @@ def app(monkeypatch):
     monkeypatch.setattr(index, "index_exists", lambda *a, **k: True)
     monkeypatch.setattr(index, "vector_search", lambda *a, **kw: HITS)
     monkeypatch.setattr(config, "APP_RETRIEVER", "vector")
+    import streamlit as st
+
+    st.cache_resource.clear()  # fresh daily counter for every test
     return AppTest.from_file(str(config.ROOT / "app.py"), default_timeout=30)
 
 
@@ -82,3 +85,61 @@ def test_api_key_can_come_from_streamlit_secrets(app, monkeypatch):
     app.run()
     assert not app.exception
     assert not any("GEMINI_API_KEY" in e.value for e in app.error)
+
+
+class CountingProvider(FakeProvider):
+    def __init__(self):
+        self.calls = 0
+
+    def generate(self, system, prompt, temperature=0.0):
+        self.calls += 1
+        return super().generate(system, prompt, temperature)
+
+
+def fresh_app():
+    import streamlit as st
+
+    st.cache_resource.clear()  # the daily counter lives in the resource cache
+    return AppTest.from_file(str(config.ROOT / "app.py"), default_timeout=30)
+
+
+def test_session_limit_stops_questions_after_the_limit(app, monkeypatch):
+    provider = CountingProvider()
+    monkeypatch.setattr(llm, "get_provider", lambda name=None: provider)
+    monkeypatch.setattr(config, "DEMO_SESSION_LIMIT", 2)
+    monkeypatch.setattr(config, "DEMO_DAILY_LIMIT", 100)
+    app = fresh_app()
+    app.run()
+    for question in ("one", "two", "three"):
+        app.chat_input[0].set_value(question).run()
+    assert not app.exception
+    assert provider.calls == 2
+    assert any("limit of 2 questions for this session" in w.value for w in app.warning)
+    assert app.chat_input[0].disabled
+
+
+def test_daily_limit_is_shared_across_sessions(monkeypatch):
+    provider = CountingProvider()
+    monkeypatch.setattr(index, "index_exists", lambda *a, **k: True)
+    monkeypatch.setattr(index, "vector_search", lambda *a, **kw: HITS)
+    monkeypatch.setattr(config, "APP_RETRIEVER", "vector")
+    monkeypatch.setattr(llm, "get_provider", lambda name=None: provider)
+    monkeypatch.setattr(config, "DEMO_SESSION_LIMIT", 10)
+    monkeypatch.setattr(config, "DEMO_DAILY_LIMIT", 1)
+
+    first = fresh_app()
+    first.run()
+    first.chat_input[0].set_value("first visitor").run()
+
+    second = AppTest.from_file(str(config.ROOT / "app.py"), default_timeout=30)  # same process, same counter
+    second.run()  # the input is already disabled, so the second visitor cannot ask
+
+    assert provider.calls == 1
+    assert any("daily question limit" in w.value for w in second.warning)
+    assert second.chat_input[0].disabled
+
+
+def test_demo_limits_are_well_below_the_free_quota():
+    calls_per_question = 2  # rerank + answer
+    assert config.DEMO_SESSION_LIMIT == 10
+    assert config.DEMO_DAILY_LIMIT * calls_per_question <= 0.5 * config.GEMINI_FREE_REQUESTS_PER_DAY
