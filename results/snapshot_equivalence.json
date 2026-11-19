@@ -1,0 +1,18 @@
+{
+  "dev": {
+    "n": 233,
+    "identical_shortlists": 177,
+    "gold_in_shortlist_local": 185,
+    "gold_in_shortlist_shipped": 185,
+    "only_local": [],
+    "only_shipped": []
+  },
+  "test": {
+    "n": 100,
+    "identical_shortlists": 77,
+    "gold_in_shortlist_local": 76,
+    "gold_in_shortlist_shipped": 76,
+    "only_local": [],
+    "only_shipped": []
+  }
+}

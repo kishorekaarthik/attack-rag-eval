@@ -61,8 +61,11 @@ def test_app_serves_the_final_pipeline_by_default():
     assert PIPELINES[config.APP_RETRIEVER] == dict(corpus="procedures", bm25=True, llm_rerank=True)
 
 
-def test_first_start_builds_the_index_the_pipeline_searches(monkeypatch):
+def test_first_start_builds_the_index_the_pipeline_searches_when_no_snapshot_matches(monkeypatch):
     built = {}
+    import copilot.snapshot as snapshot
+
+    monkeypatch.setattr(snapshot, "restore_index", lambda *a, **k: False)
     monkeypatch.setattr(index, "index_exists", lambda *a, **k: False)
     monkeypatch.setattr(index, "build_index", lambda chunks, **kw: built.update(kw, n=len(chunks),
                         sections={c.section for c in chunks}))
@@ -143,3 +146,23 @@ def test_demo_limits_are_well_below_the_free_quota():
     calls_per_question = 2  # rerank + answer
     assert config.DEMO_SESSION_LIMIT == 10
     assert config.DEMO_DAILY_LIMIT * calls_per_question <= 0.5 * config.GEMINI_FREE_REQUESTS_PER_DAY
+
+
+def test_first_start_restores_the_shipped_snapshot_instead_of_embedding(monkeypatch):
+    calls = {}
+    monkeypatch.setattr(index, "index_exists", lambda *a, **k: False)
+    monkeypatch.setattr(index, "build_index", lambda *a, **k: calls.setdefault("built_from_bundle", True))
+    import copilot.snapshot as snapshot
+
+    monkeypatch.setattr(snapshot, "restore_index", lambda path, **kw: calls.update(restored=(path.name, kw)) or True)
+    monkeypatch.setattr(config, "APP_RETRIEVER", "hybrid_proc_llm")
+    monkeypatch.setattr(llm, "get_provider", lambda name=None: FakeProvider())
+    import streamlit as st
+
+    st.cache_resource.clear()
+    app = AppTest.from_file(str(config.ROOT / "app.py"), default_timeout=60)
+    app.run()
+    assert not app.exception
+    assert "built_from_bundle" not in calls
+    name, kw = calls["restored"]
+    assert name == f"attack-v{config.ATTACK_VERSION}-minilm-procedures.npz" and kw["corpus"] == "procedures"

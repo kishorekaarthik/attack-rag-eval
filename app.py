@@ -41,6 +41,11 @@ def prepare_index() -> bool:
     after a restart triggers the build; everyone after that reuses it.
     """
     if not index.index_exists(embed_model=EMBED_MODEL, corpus=CORPUS):
+        from copilot import snapshot
+
+        # Normally the shipped snapshot: load stored vectors, embed nothing.
+        if snapshot.restore_index(snapshot.snapshot_path(EMBED_MODEL, CORPUS), embed_model=EMBED_MODEL, corpus=CORPUS):
+            return True
         from copilot.attack import bundle_path, load_techniques
         from copilot.chunking import chunk_technique
 

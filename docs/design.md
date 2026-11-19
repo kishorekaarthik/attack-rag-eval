@@ -329,10 +329,30 @@ It is never used for tuning or selection.
 - Streamlit Community Cloud, from `requirements.txt`. torch is pinned to the
   CPU-only build; the default Linux wheel brings several GB of CUDA libraries
   that a Community Cloud app (0.7–2.7 GB of memory, no GPU) cannot use.
-- The ATT&CK bundle is downloaded and the index built on first start, then
-  cached for the life of the process. No database is committed.
-- The Gemini key is a Community Cloud secret; the app copies secrets into the
-  environment so the code reads keys the same way everywhere.
+- The app ships a prebuilt index: `data/index/attack-v20.1-minilm-procedures.npz`
+  (5.9 MB) holds the 3,811 chunks, their float32 vectors and the reranker's
+  technique catalog. On first start it is loaded into ChromaDB in about 5
+  seconds, with nothing embedded and no ATT&CK bundle downloaded or parsed. It
+  is stored as plain arrays and JSON, never pickle, and records the ATT&CK
+  release, embedding model and chunk set; a mismatched snapshot is refused and
+  the app falls back to building from the bundle. A test checks that it still
+  equals what the current code builds (`scripts/export_snapshot.py` rewrites it).
+- Chunks keep their original insertion order in the snapshot: the HNSW graph
+  and BM25 both depend on it, and sorting changed rankings. Even so, HNSW is
+  approximate and two builds from identical vectors differ slightly (27 of 233
+  dev vector shortlists). Measured on outcomes, the shipped index and the
+  evaluated one put the correct technique in the reranker's top-20 shortlist
+  for exactly the same questions (185/233 dev, 76/100 test;
+  `results/snapshot_equivalence.json`), while the order inside the shortlist
+  differs for about a quarter of questions.
+- The Gemini key is a Community Cloud secret, and a separate key from the one
+  used for evals; the app copies secrets into the environment so the code
+  reads keys the same way everywhere.
+- Quota protection: 10 questions per browser session and 100 per day across
+  all sessions (each question makes two Gemini calls, so 200 of the free
+  tier's 500 daily requests). The daily count is kept in memory per app
+  process, so a restart resets it; it guards against casual overuse, not
+  abuse.
 
 ## Limitations
 

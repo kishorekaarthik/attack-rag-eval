@@ -98,7 +98,16 @@ def provider_for(spec) -> LLMProvider:
 
 
 def default_reranker(provider: LLMProvider | None = None, spec=True) -> LLMReranker:
-    from copilot.attack import bundle_path, load_techniques
+    """Reranker with the technique catalog from the shipped snapshot, or from the bundle if there is none.
 
-    catalog = {t.id: (t.name, summary_line(t.description)) for t in load_techniques(bundle_path())}
+    Both give identical names and summaries (a test checks this); the snapshot
+    spares the deployed app from parsing the 55 MB bundle.
+    """
+    from copilot import snapshot
+
+    catalog = snapshot.load_catalog(config.EMBED_MODEL, "procedures")
+    if catalog is None:
+        from copilot.attack import bundle_path, load_techniques
+
+        catalog = {t.id: (t.name, summary_line(t.description)) for t in load_techniques(bundle_path())}
     return LLMReranker(provider or provider_for(spec), catalog)

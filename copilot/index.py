@@ -61,19 +61,21 @@ def index_exists(persist_dir: Path = config.CHROMA_DIR, embed_model: str = confi
 
 
 def build_index(chunks: list[Chunk], persist_dir: Path = config.CHROMA_DIR, embed_model: str = config.EMBED_MODEL,
-                corpus: str = "base") -> None:
+                corpus: str = "base", vectors: list[list[float]] | None = None) -> None:
     """(Re)build the collection from scratch so stale chunks never linger.
 
     `corpus` names a variant of the chunk set (e.g. "procedures" adds
     procedure-example chunks), kept in its own collection so variants can be
-    compared without rebuilding.
+    compared without rebuilding. `vectors`, if given, are used as they are
+    (a prebuilt snapshot) instead of embedding the chunks.
     """
     client = _client(persist_dir)
     name = _collection_name(embed_model, corpus)
     if any(c.name == name for c in client.list_collections()):
         client.delete_collection(name)
     collection = client.create_collection(name, metadata={"hnsw:space": "cosine"})
-    vectors = embed([c.text for c in chunks], embed_model)
+    if vectors is None:
+        vectors = embed([c.text for c in chunks], embed_model)
     for start in range(0, len(chunks), 1000):  # stay under Chroma's max batch size
         batch = chunks[start:start + 1000]
         collection.add(
