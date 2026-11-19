@@ -1,0 +1,847 @@
+{
+  "model": "gemini-3.1-flash-lite",
+  "split": "recent",
+  "summary": {
+    "overall": {
+      "n": 32,
+      "hits": 0,
+      "hit_rate": 0.0,
+      "ids_total": 160,
+      "ids_invalid": 0,
+      "ids_retired": 34,
+      "invalid_id_rate": 0.0,
+      "retired_id_rate": 0.2125,
+      "questions_with_invalid": 0,
+      "questions_with_retired": 14,
+      "questions_stale": 5
+    },
+    "recent": {
+      "n": 32,
+      "hits": 0,
+      "hit_rate": 0.0,
+      "ids_total": 160,
+      "ids_invalid": 0,
+      "ids_retired": 34,
+      "invalid_id_rate": 0.0,
+      "retired_id_rate": 0.2125,
+      "questions_with_invalid": 0,
+      "questions_with_retired": 14,
+      "questions_stale": 5
+    }
+  },
+  "paired_vs_final": {
+    "n": 32,
+    "hits_before": 23,
+    "hits_after": 0,
+    "fixed": 0,
+    "broke": 23,
+    "diff": -0.71875,
+    "diff_ci": [
+      -0.875,
+      -0.5625
+    ],
+    "p_value": 2.384185791015625e-07
+  },
+  "questions": [
+    {
+      "id": "r001",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1027.018",
+      "predicted": [
+        "T1027.010",
+        "T1027",
+        "T1059.001",
+        "T1059.005",
+        "T1059.003"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r002",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1608.007",
+      "predicted": [
+        "T1583.001",
+        "T1588.002",
+        "T1584.004",
+        "T1204.002",
+        "T1585.002"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r003",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1682",
+      "predicted": [
+        "T1592.002",
+        "T1592.004",
+        "T1593.002",
+        "T1594",
+        "T1597.001"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r004",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1683",
+      "predicted": [
+        "T1566.002",
+        "T1566.001",
+        "T1585.002",
+        "T1583.003",
+        "T1588.002"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r005",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1683.001",
+      "predicted": [
+        "T1566.002",
+        "T1566.001",
+        "T1566.003",
+        "T1593.001",
+        "T1598.002"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r006",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1683.002",
+      "predicted": [
+        "T1557.002",
+        "T1557.001",
+        "T1566.001",
+        "T1566.002",
+        "T1566.003"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r007",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1684",
+      "predicted": [
+        "T1566.003",
+        "T1566.001",
+        "T1557.002",
+        "T1557.001",
+        "T1585.001"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r008",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1684.001",
+      "predicted": [
+        "T1566.002",
+        "T1566.001",
+        "T1557.002",
+        "T1204.002",
+        "T1566.003"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r009",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1684.002",
+      "predicted": [
+        "T1566.002",
+        "T1566.001",
+        "T1557.001",
+        "T1534",
+        "T1566"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r010",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1685",
+      "predicted": [
+        "T1562.001",
+        "T1070.004",
+        "T1485",
+        "T1562.002",
+        "T1070.001"
+      ],
+      "kinds": [
+        "retired",
+        "valid",
+        "valid",
+        "retired",
+        "retired"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 3,
+      "stale": true
+    },
+    {
+      "id": "r011",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1685.001",
+      "predicted": [
+        "T1562.002",
+        "T1070.002",
+        "T1562.001",
+        "T1489",
+        "T1070.001"
+      ],
+      "kinds": [
+        "retired",
+        "retired",
+        "retired",
+        "valid",
+        "retired"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 4,
+      "stale": true
+    },
+    {
+      "id": "r012",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1685.002",
+      "predicted": [
+        "T1562.002",
+        "T1562.001",
+        "T1070.001",
+        "T1562.004",
+        "T1485"
+      ],
+      "kinds": [
+        "retired",
+        "retired",
+        "retired",
+        "retired",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 4,
+      "stale": false
+    },
+    {
+      "id": "r013",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1685.003",
+      "predicted": [
+        "T1562.001",
+        "T1070.001",
+        "T1489",
+        "T1562.002",
+        "T1070.002"
+      ],
+      "kinds": [
+        "retired",
+        "retired",
+        "valid",
+        "retired",
+        "retired"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 4,
+      "stale": false
+    },
+    {
+      "id": "r014",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1685.004",
+      "predicted": [
+        "T1562.002",
+        "T1562.001",
+        "T1070.004",
+        "T1562.006",
+        "T1485"
+      ],
+      "kinds": [
+        "retired",
+        "retired",
+        "valid",
+        "retired",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 3,
+      "stale": false
+    },
+    {
+      "id": "r015",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1685.005",
+      "predicted": [
+        "T1485",
+        "T1070.004",
+        "T1070.002",
+        "T1562.002",
+        "T1070.001"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "retired",
+        "retired",
+        "retired"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 3,
+      "stale": true
+    },
+    {
+      "id": "r016",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1685.006",
+      "predicted": [
+        "T1070.004",
+        "T1485",
+        "T1070.002",
+        "T1070.003",
+        "T1562.002"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "retired",
+        "valid",
+        "retired"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 2,
+      "stale": true
+    },
+    {
+      "id": "r017",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1685.007",
+      "predicted": [
+        "T1499.002",
+        "T1203",
+        "T1068",
+        "T1211",
+        "T1499.001"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r018",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1686",
+      "predicted": [
+        "T1562.004",
+        "T1562.001",
+        "T1059.001",
+        "T1059.003",
+        "T1068"
+      ],
+      "kinds": [
+        "retired",
+        "retired",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 2,
+      "stale": true
+    },
+    {
+      "id": "r019",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1686.001",
+      "predicted": [
+        "T1562.004",
+        "T1090.002",
+        "T1572",
+        "T1133",
+        "T1071.001"
+      ],
+      "kinds": [
+        "retired",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 1,
+      "stale": false
+    },
+    {
+      "id": "r020",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1686.002",
+      "predicted": [
+        "T1562.004",
+        "T1098.001",
+        "T1078.002",
+        "T1548.003",
+        "T1071.001"
+      ],
+      "kinds": [
+        "retired",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 1,
+      "stale": false
+    },
+    {
+      "id": "r021",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1686.003",
+      "predicted": [
+        "T1562.004",
+        "T1562.001",
+        "T1059.001",
+        "T1059.003",
+        "T1082"
+      ],
+      "kinds": [
+        "retired",
+        "retired",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 2,
+      "stale": false
+    },
+    {
+      "id": "r022",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1687",
+      "predicted": [
+        "T1562.001",
+        "T1499.001",
+        "T1068",
+        "T1211",
+        "T1485"
+      ],
+      "kinds": [
+        "retired",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 1,
+      "stale": false
+    },
+    {
+      "id": "r023",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1688",
+      "predicted": [
+        "T1562.001",
+        "T1547.001",
+        "T1543.003",
+        "T1489",
+        "T1542.001"
+      ],
+      "kinds": [
+        "retired",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 1,
+      "stale": false
+    },
+    {
+      "id": "r024",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1689",
+      "predicted": [
+        "T1059.007",
+        "T1204.002",
+        "T1059.001",
+        "T1059.003",
+        "T1548.001"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r025",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1690",
+      "predicted": [
+        "T1562.002",
+        "T1070.003",
+        "T1562.001",
+        "T1070.002",
+        "T1059.004"
+      ],
+      "kinds": [
+        "retired",
+        "valid",
+        "retired",
+        "retired",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 3,
+      "stale": false
+    },
+    {
+      "id": "r026",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1696",
+      "predicted": [
+        "T1110.003",
+        "T1078.004",
+        "T1550.001",
+        "T1550.002",
+        "T1078.001"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r027",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1696.001",
+      "predicted": [
+        "T1110.003",
+        "T1110.001",
+        "T1110.004",
+        "T1059.001",
+        "T1071.001"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r028",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1696.002",
+      "predicted": [
+        "T1589.002",
+        "T1110.003",
+        "T1498.001",
+        "T1071.001",
+        "T1583.001"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r029",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1697",
+      "predicted": [
+        "T1550.001",
+        "T1550.002",
+        "T1550.003",
+        "T1078.004",
+        "T1528"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r030",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1698",
+      "predicted": [
+        "T1190",
+        "T1204.002",
+        "T1566.001",
+        "T1071.001",
+        "T1048"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r031",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1699",
+      "predicted": [
+        "T1505.001",
+        "T1588.002",
+        "T1566.001",
+        "T1059.001",
+        "T1204.002"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    },
+    {
+      "id": "r032",
+      "source": "recent",
+      "split": "recent",
+      "gold": "T1700",
+      "predicted": [
+        "T1567.002",
+        "T1071.001",
+        "T1537",
+        "T1041",
+        "T1204.002"
+      ],
+      "kinds": [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "valid"
+      ],
+      "hit": false,
+      "rank": null,
+      "n_invalid": 0,
+      "n_retired": 0,
+      "stale": false
+    }
+  ]
+}

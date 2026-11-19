@@ -28,7 +28,7 @@ SET_LABELS = {"overall": "all", "independent": "independent set", "generated": "
 def print_summary(summary: dict) -> None:
     print(f"{'set':<16} {'hit@5':>9} {'rate':>6} {'95% CI':>15}   {'MRR@5':>6} {'95% CI':>15}   {'hit@5 parent':>13}")
     for name, s in summary.items():
-        print(f"{SET_LABELS[name]:<16} {str(s['hits']) + '/' + str(s['n']):>9} {s['hit_rate']:>6.3f} "
+        print(f"{SET_LABELS.get(name, name):<16} {str(s['hits']) + '/' + str(s['n']):>9} {s['hit_rate']:>6.3f} "
               f"[{s['hit_rate_ci'][0]:.3f}, {s['hit_rate_ci'][1]:.3f}]   {s['mrr']:>6.3f} "
               f"[{s['mrr_ci'][0]:.3f}, {s['mrr_ci'][1]:.3f}]   "
               f"{str(s['hits_parent']) + '/' + str(s['n']):>8} {s['hit_rate_parent']:.3f}")

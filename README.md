@@ -168,9 +168,10 @@ successor is the correct answer.
 |---|---|---|---|---:|---|---|---|
 | **Final pipeline** | **73/100** | | | | 0 | 0 | 0 |
 | Closed book, gemini-3.5-flash-lite | 43/100 | 10 / 40 | −0.300 [−0.420, −0.170] | <0.001 | 1 of 496 | 17 of 496 (14 questions) | 1 |
-| Closed book, gemini-3.1-flash-lite | _pending_ | | | | | | |
+| Closed book, gemini-3.1-flash-lite | 39/100 | 6 / 40 | −0.340 [−0.450, −0.220] | <0.001 | 1 of 500 | 14 of 500 (9 questions) | 2 |
 
-Detail for gemini-3.5-flash-lite (`results/closed_book_gemini-3.5-flash-lite_test.json`):
+Detail for gemini-3.5-flash-lite (`results/closed_book_gemini-3.5-flash-lite_test.json`; the 3.1 file
+has the same fields):
 
 - **Invalid:** `T1636.002`, a Mobile ATT&CK ID given for an Enterprise question.
 - **Retired**, all revoked: `T1562.001` ×7 (now `T1685` Disable or Modify Tools), `T1574.002` ×5 (now
@@ -186,7 +187,39 @@ index of active techniques.
 
 ### Techniques added or renumbered in ATT&CK v19 and v20
 
-_pending_
+"Added or renumbered in the last two releases" means active in v20.1 but not
+in v18.1, the last release before v19: 32 techniques. 15 are new IDs for
+revoked ones (for example `T1562.001` Disable or Modify Tools became `T1685`),
+and 17 are new techniques, many about AI systems (prompt injection, AI result
+poisoning). Only 6 test questions target them, so a separate slice has one
+generated question per technique (`data/eval/recent_questions.jsonl`), never
+used for tuning or selection.
+
+| | Renumbered (15) | New (17) | All (32) | Stale answers | Questions with a retired ID |
+|---|---|---|---|---|---|
+| **Final pipeline** | **14/15** | **9/17** | **23/32 (0.719)** | 0 | 0 |
+| Closed book, gemini-3.1-flash-lite | 0/15 | 0/17 | 0/32 | 5 | 14 |
+| Closed book, gemini-3.5-flash-lite | 0/15 | 0/17 | 0/32 | 8 | 20 |
+
+Paired against the pipeline, each closed-book model fixes 0 and breaks 23
+(difference −0.719 [−0.875, −0.562], McNemar p < 0.001). On the 6 test
+questions that target these techniques: pipeline 4/6, both closed-book
+models 0/6.
+
+- **Renumbered techniques:** the models often know the technique but answer
+  with its old ID. gemini-3.5-flash-lite gave a revoked ID whose successor was
+  correct on 8 of 15 renumbered questions, 3.1 on 5. Because exact IDs are
+  scored, those count as misses, and in a real tool they would point an
+  analyst to a retired page.
+- **New techniques:** the models fall back to the nearest older technique,
+  e.g. `T1027.010` Command Obfuscation for `T1027.018` Invisible Unicode. The
+  pipeline finds 9 of 17. It misses 8, most of them broad AI-related
+  techniques (Query Public AI Services, Generate Content and its two
+  sub-techniques, Direct Prompt Injection, AI-Enabled Exfiltration), plus
+  Social Engineering and Impair Autonomous Defenses.
+- The models' training predates these releases, so this measures freshness
+  as much as skill: it is the case where retrieval over a current corpus
+  matters most.
 
 ### Self-generation check
 
