@@ -14,5 +14,13 @@
     "recall@20": 183,
     "recall@50": 209,
     "techniques_per_question_median": null
+  },
+  "hybrid_proc": {
+    "n": 233,
+    "recall@5": 121,
+    "recall@10": 154,
+    "recall@20": 185,
+    "recall@50": 212,
+    "techniques_per_question_median": null
   }
 }

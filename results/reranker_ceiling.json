@@ -1,0 +1,12 @@
+{
+  "dev": {
+    "n": 233,
+    "in_reranker_shortlist": 185,
+    "final_hits": 171
+  },
+  "test": {
+    "n": 100,
+    "in_reranker_shortlist": 76,
+    "final_hits": 73
+  }
+}

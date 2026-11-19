@@ -37,7 +37,7 @@ def print_summary(summary: dict) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--retriever", default="vector", choices=sorted(PIPELINES))
-    parser.add_argument("--split", default="dev", choices=["dev", "test"])
+    parser.add_argument("--split", default="dev", choices=["dev", "test", "recent"])
     parser.add_argument("--questions", type=Path, default=QUESTIONS_PATH)
     args = parser.parse_args()
 
