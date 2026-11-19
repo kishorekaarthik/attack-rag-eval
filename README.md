@@ -242,6 +242,24 @@ Evals (results are written to `results/`; Gemini responses are cached in
 .venv\Scripts\python -m pytest
 ```
 
+## Deployment
+
+The public demo runs on Streamlit Community Cloud.
+
+- **Prebuilt index.** `data/index/attack-v20.1-minilm-procedures.npz` (5.9 MB)
+  holds the chunks, their vectors and the reranker's catalog, so the app
+  loads the index in seconds and embeds nothing at startup.
+- **Separate API key.** The demo uses its own Gemini key, set as the
+  `GEMINI_API_KEY` secret in Streamlit, never the key used for evals.
+- **Quota limits.** 10 questions per browser session and 100 per day across
+  all visitors, well under the free tier's 500 daily requests (each question
+  makes two calls). When a limit is reached the input is disabled with an
+  explanation.
+
+To deploy your own copy: fork the repo, create an app at share.streamlit.io
+with `app.py` as the main file and Python 3.13, and add `GEMINI_API_KEY` under
+Secrets.
+
 ## LLM providers
 
 `LLM_PROVIDER` in `.env` selects the vendor.
