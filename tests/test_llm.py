@@ -218,3 +218,9 @@ def test_gemini_retries_server_side_timeouts_and_internal_errors(error):
     provider, models, waits = flaky_gemini(failures=1, error=error)
     assert provider.generate("s", "p") == "answer"
     assert len(models.calls) == 2
+
+
+def test_get_provider_can_override_the_model(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    provider = get_provider("gemini", model="gemini-3.5-flash-lite")
+    assert (provider.name, provider.model) == ("gemini", "gemini-3.5-flash-lite")

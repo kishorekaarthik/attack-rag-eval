@@ -85,3 +85,23 @@ def test_cache_is_keyed_by_model_so_two_models_do_not_share_answers(tmp_path):
     other.model = "fake-2"
     LLMReranker(other, CATALOG, cache_path=cache)("q", HITS)
     assert len(other.calls) == 1
+
+
+def test_reranker_spec_picks_provider_and_model(monkeypatch):
+    from copilot import llm
+    from copilot.llm_rerank import provider_for
+
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
+    assert provider_for(True).model == llm.config.GEMINI_MODEL
+    p = provider_for("gemini:gemini-3.5-flash-lite")
+    assert (p.name, p.model) == ("gemini", "gemini-3.5-flash-lite")
+    p = provider_for("claude")
+    assert (p.name, p.model) == ("claude", llm.config.CLAUDE_MODEL)
+
+
+def test_named_pipelines_for_other_reranker_models_exist():
+    from copilot.retrieval import PIPELINES
+
+    assert PIPELINES["hybrid_proc_llm35"]["llm_rerank"] == "gemini:gemini-3.5-flash-lite"
+    assert PIPELINES["hybrid_proc_llm_claude"]["llm_rerank"] == "claude"

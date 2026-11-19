@@ -83,7 +83,7 @@ def retrieve_all(questions: list[Question], settings: dict, depth: int = 30,
         if llm_reranker is None:
             from copilot.llm_rerank import default_reranker
 
-            llm_reranker = default_reranker()
+            llm_reranker = default_reranker(spec=use_llm)
         for q in questions:
             hits[q.id] = llm_reranker(q.question, hits[q.id])
     return {qid: h[:depth] for qid, h in hits.items()}

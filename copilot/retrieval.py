@@ -134,6 +134,9 @@ PIPELINES: dict[str, dict] = {
     "vector_llm": dict(llm_rerank=True),
     "vector_proc_llm": dict(corpus="procedures", llm_rerank=True),
     "hybrid_proc_llm": dict(corpus="procedures", bm25=True, llm_rerank=True),
+    # Same pipeline, reranked by a different model (self-generation check, Phase 5).
+    "hybrid_proc_llm35": dict(corpus="procedures", bm25=True, llm_rerank="gemini:gemini-3.5-flash-lite"),
+    "hybrid_proc_llm_claude": dict(corpus="procedures", bm25=True, llm_rerank="claude"),
 }
 
 
@@ -141,7 +144,8 @@ def get_retriever(name: str) -> Retriever:
     if name not in PIPELINES:
         raise ValueError(f"Unknown retriever '{name}'. Choose one of: {', '.join(PIPELINES)}.")
     settings = dict(PIPELINES[name])
-    if not settings.pop("llm_rerank", False):
+    spec = settings.pop("llm_rerank", False)
+    if not spec:
         return build_retriever(**settings)
 
     from copilot.llm_rerank import default_reranker
@@ -150,7 +154,7 @@ def get_retriever(name: str) -> Retriever:
 
     def retrieve(query: str, k: int = 5) -> list[Hit]:
         if "reranker" not in state:  # built on first use: it needs an API key
-            state["reranker"] = default_reranker()
+            state["reranker"] = default_reranker(spec=spec)
         return state["reranker"](query, first(query, max(k, config.LLM_RERANK_DEPTH)))[:k]
 
     return retrieve

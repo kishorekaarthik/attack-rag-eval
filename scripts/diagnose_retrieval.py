@@ -30,9 +30,10 @@ RESULTS = config.ROOT / "results"
 def recall() -> None:
     """Where is the correct technique in a deep ranking? Top 5 = hit; 6-50 = ranking miss; beyond = retrieval miss."""
     questions = load_questions(split="dev")
-    depth_chunks, ks = 400, (5, 10, 20, 50)
+    depth_chunks, ks = 400, (5, 10, 20, 50)  # 20 = what the LLM reranker is shown
     out = {}
-    for name, settings in (("vector", dict()), ("hybrid", dict(bm25=True))):
+    for name, settings in (("vector", dict()), ("hybrid", dict(bm25=True)),
+                           ("hybrid_proc", dict(corpus="procedures", bm25=True))):
         retriever = build_retriever(**settings)
         ranks = []
         for q in questions:

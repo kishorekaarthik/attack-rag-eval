@@ -131,7 +131,7 @@ _PROVIDERS = {
 }
 
 
-def get_provider(name: str | None = None) -> LLMProvider:
+def get_provider(name: str | None = None, model: str | None = None) -> LLMProvider:
     name = (name or config.LLM_PROVIDER).lower()
     if name not in _PROVIDERS:
         raise ValueError(f"Unknown LLM provider '{name}'. Choose one of: {', '.join(_PROVIDERS)}.")
@@ -139,4 +139,4 @@ def get_provider(name: str | None = None) -> LLMProvider:
     key = (os.getenv(env_var) or "").strip()
     if not key:
         raise MissingKeyError(f"{env_var} is not set. Add it to your .env file (see .env.example).")
-    return cls(api_key=key)
+    return cls(api_key=key, model=model) if model else cls(api_key=key)

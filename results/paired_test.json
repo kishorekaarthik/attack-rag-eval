@@ -1,0 +1,15 @@
+{
+  "hybrid_proc_llm": {
+    "n": 100,
+    "hits_before": 55,
+    "hits_after": 73,
+    "fixed": 20,
+    "broke": 2,
+    "diff": 0.18,
+    "diff_ci": [
+      0.1,
+      0.27
+    ],
+    "p_value": 0.00012111663818359375
+  }
+}

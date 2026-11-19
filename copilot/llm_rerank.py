@@ -86,9 +86,19 @@ class LLMReranker:
         return sorted(hits, key=lambda h: position[h.technique_id])  # stable: chunk order within a technique is kept
 
 
-def default_reranker(provider: LLMProvider | None = None) -> LLMReranker:
-    from copilot.attack import bundle_path, load_techniques
+def provider_for(spec) -> LLMProvider:
+    """`True` -> the configured default; "gemini" / "claude" -> that vendor's default model;
+    "gemini:<model>" -> that vendor and model."""
     from copilot.llm import get_provider
 
+    if spec is True:
+        return get_provider()
+    name, _, model = str(spec).partition(":")
+    return get_provider(name, model=model or None)
+
+
+def default_reranker(provider: LLMProvider | None = None, spec=True) -> LLMReranker:
+    from copilot.attack import bundle_path, load_techniques
+
     catalog = {t.id: (t.name, summary_line(t.description)) for t in load_techniques(bundle_path())}
-    return LLMReranker(provider or get_provider(), catalog)
+    return LLMReranker(provider or provider_for(spec), catalog)
