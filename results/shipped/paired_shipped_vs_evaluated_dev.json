@@ -1,0 +1,28 @@
+{
+  "evaluated_index": "results/retrieval_hybrid_proc_llm_dev.json",
+  "shipped_index": "results/shipped/retrieval_hybrid_proc_llm_dev_shipped.json",
+  "n": 233,
+  "hits_before": 171,
+  "hits_after": 171,
+  "fixed": 0,
+  "broke": 0,
+  "diff": 0.0,
+  "diff_ci": [
+    0.0,
+    0.0
+  ],
+  "p_value": 1.0,
+  "vs_vector_baseline": {
+    "n": 233,
+    "hits_before": 112,
+    "hits_after": 171,
+    "fixed": 65,
+    "broke": 6,
+    "diff": 0.2532188841201717,
+    "diff_ci": [
+      0.1888412017167382,
+      0.31759656652360513
+    ],
+    "p_value": 1.3321308760808536e-13
+  }
+}

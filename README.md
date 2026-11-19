@@ -144,6 +144,23 @@ The reranker can only choose from its top-20 shortlist.
 The remaining errors are mostly first-stage retrieval misses; further gains
 have to come from retrieval, not reranking.
 
+### The deployed app's measured score
+
+The app ships a prebuilt index (see [Deployment](#deployment)) rather than
+the index the evals were run on. Approximate nearest-neighbour search builds a
+slightly different graph each time, so the shipped index was scored on its
+own: the final pipeline on the 233 dev questions, with the evaluation index
+removed and only the shipped snapshot loaded, as on Streamlit Cloud.
+
+| Index | hit@5 | MRR@5 |
+|---|---|---|
+| Evaluated index | 171/233 (0.734) | 0.613 |
+| **Shipped snapshot (deployed app)** | **171/233 (0.734)** | **0.615** |
+
+Paired, question by question: 0 fixed, 0 broken. The top 5 differ in order
+for 26 questions, but no question changes between hit and miss
+(`results/shipped/`).
+
 ### Cost and latency of the reranker
 
 Measured on 20 uncached dev questions (`results/llm_rerank_cost_dev.json`):
