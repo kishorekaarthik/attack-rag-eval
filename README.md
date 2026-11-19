@@ -8,6 +8,9 @@ Describe what you observed ("a hidden window ran an encoded command") or ask
 about a technique. The copilot answers from retrieved ATT&CK passages only and
 cites technique IDs.
 
+**Live demo:** https://attack-copilot.streamlit.app (10 questions per session;
+the first answer takes about 30 seconds while models load).
+
 **Headline result.** On 100 held-out test questions, the final pipeline puts
 the correct technique in its top 5 for **73/100**, against **55/100** for
 plain vector search (20 fixed, 2 broken, paired difference +0.18
@@ -294,7 +297,8 @@ Evals (results are written to `results/`; Gemini responses are cached in
 
 ## Deployment
 
-The public demo runs on Streamlit Community Cloud.
+The public demo runs on Streamlit Community Cloud at
+https://attack-copilot.streamlit.app.
 
 - **Prebuilt index.** `data/index/attack-v20.1-minilm-procedures.npz` (5.9 MB)
   holds the chunks, their vectors and the reranker's catalog, so the app
