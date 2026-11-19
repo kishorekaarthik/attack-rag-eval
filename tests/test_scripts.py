@@ -16,3 +16,8 @@ def test_eval_summary_prints_sets_it_has_no_label_for(capsys):
     print_summary({"overall": summary(32), "recent": summary(32)})
     out = capsys.readouterr().out
     assert "recent" in out and "1/32" in out
+
+
+def test_eval_retrieval_reports_a_relative_out_path_without_crashing():
+    source = (config.ROOT / "scripts" / "eval_retrieval.py").read_text(encoding="utf-8")
+    assert "out.relative_to(config.ROOT)" not in source  # crashed for --out results/shipped/...

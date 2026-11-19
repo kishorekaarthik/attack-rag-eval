@@ -74,7 +74,7 @@ def main() -> int:
     out = args.out or config.ROOT / "results" / f"retrieval_{args.retriever}_{args.split}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    print(f"wrote {out.relative_to(config.ROOT)}\n")
+    print(f"wrote {out}\n")
     return 0
 
 
