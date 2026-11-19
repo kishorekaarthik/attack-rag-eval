@@ -1,0 +1,18 @@
+{
+  "rule": "docs/design.md, commit bcc6f73",
+  "candidate": "hybrid_proc",
+  "challenger": "hybrid_proc_llm",
+  "n": 233,
+  "hits_before": 126,
+  "hits_after": 171,
+  "fixed": 51,
+  "broke": 6,
+  "diff": 0.19313304721030042,
+  "diff_ci": [
+    0.13304721030042918,
+    0.2532188841201717
+  ],
+  "p_value": 5.676193126635809e-10,
+  "challenger_selected": true,
+  "final": "hybrid_proc_llm"
+}
