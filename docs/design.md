@@ -338,7 +338,12 @@ It is never used for tuning or selection.
 
 - The independent set is 25 questions (8 in test); its scores carry wide
   intervals and cannot show significance on their own.
-- 308 of 333 questions were written by an LLM from the indexed text.
+- All 333 questions were written by LLMs: 308 by gemini-3.1-flash-lite from
+  the indexed technique text, and 25 (the independent set) by a different
+  model without access to the corpus. The independent set is also easier:
+  every pipeline scores higher on it on dev (on test, with only 8
+  questions, the baseline does not), likely because it covers well-known
+  techniques.
 - Many remaining misses are parent/sub-technique granularity: the answer is
   `T1059.003` and the top choice is `T1059`, or the reverse.
 - A quarter of test questions never reach the reranker's top-20 shortlist;

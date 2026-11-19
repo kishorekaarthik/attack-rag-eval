@@ -167,8 +167,19 @@ successor is the correct answer.
 | | hit@5 | vs final pipeline: fixed / broke | Difference [paired 95% CI] | McNemar p | Invalid IDs | Retired IDs (questions) | Stale answers |
 |---|---|---|---|---:|---|---|---|
 | **Final pipeline** | **73/100** | | | | 0 | 0 | 0 |
-| Closed book, gemini-3.5-flash-lite | 43/100 | 10 / 40 | −0.300 [−0.420, −0.170] | <0.001 | 1 of 496 | 17 (14) | 1 |
+| Closed book, gemini-3.5-flash-lite | 43/100 | 10 / 40 | −0.300 [−0.420, −0.170] | <0.001 | 1 of 496 | 17 of 496 (14 questions) | 1 |
 | Closed book, gemini-3.1-flash-lite | _pending_ | | | | | | |
+
+Detail for gemini-3.5-flash-lite (`results/closed_book_gemini-3.5-flash-lite_test.json`):
+
+- **Invalid:** `T1636.002`, a Mobile ATT&CK ID given for an Enterprise question.
+- **Retired**, all revoked: `T1562.001` ×7 (now `T1685` Disable or Modify Tools), `T1574.002` ×5 (now
+  `T1574.001` DLL), `T1562.004` ×2 (now `T1686` Disable or Modify System Firewall), `T1562` ×2 (now
+  `T1685`), `T1656` ×1 (now `T1684.001` Impersonation).
+- **Stale:** independent-set question i012 (stopping the endpoint agent's service), where the answer is
+  `T1685` and the model's first choice was `T1562.001`, its revoked predecessor. Only two test
+  questions target a renumbered technique (i012 and g124), so the recent-techniques slice below
+  tests this properly.
 
 The pipeline cannot return an invalid or retired ID: it only selects from an
 index of active techniques.
@@ -196,8 +207,12 @@ not run.
 ## Limitations
 
 - The independent set is small: 25 questions, 8 in test.
-- 308 of 333 questions were written by an LLM from the indexed text and may
-  echo its wording.
+- All 333 questions were written by LLMs: 308 by gemini-3.1-flash-lite from
+  the indexed technique text, and 25 (the independent set) by a different
+  model without access to the corpus. The independent set is also easier:
+  every pipeline scores higher on it on dev (on test, with only 8
+  questions, the baseline does not), likely because it covers well-known
+  techniques.
 - Many remaining misses are parent/sub-technique granularity: the answer is
   `T1059.003` and the top choice is `T1059`, or the reverse.
 - About a quarter of test questions never reach the reranker's shortlist.
